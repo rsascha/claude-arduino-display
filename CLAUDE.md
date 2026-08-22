@@ -186,6 +186,22 @@ git check-ignore -v sketches/<name>/secrets.h     # muss anschlagen
 git diff --cached | grep -c 'eyJhbGciOi'          # nur der Platzhalter darf treffen
 ```
 
+## Vorgehen, das sich bewährt hat
+
+- **Erst per `curl` gegen die echte API testen, dann in C schreiben.** Beide HA-Fallen
+  (fehlendes `end_time`, `+00:00` statt `Z`) sind so aufgefallen — auf dem Board hätten
+  sie nach einem Fehler im Sketch ausgesehen.
+- **Zahlen gegenprüfen.** Der handgeschriebene Parser auf dem ESP32 kam auf exakt dieselben
+  287 Punkte, min 21.3 und max 27.7 wie Pythons `json`-Modul auf derselben Antwort.
+- **Layout am realen Gerät kontrollieren.** Ein Foto des Panels hat eine 6-px-Überlappung
+  gezeigt, die im SVG-Prototyp unsichtbar war, weil dort andere Schriftmetriken galten.
+- **Vor jedem Commit auf Geheimnisse prüfen** (siehe Abschnitt *Geheimnisse*).
+
+## Stand
+
+Auf dem Board läuft `sketches/ha_verlauf`, Aktualisierung alle 30 Minuten.
+Alles committet, Arbeitsverzeichnis sauber bis auf `material/` (siehe unten).
+
 ## Offene Punkte
 
 - Beispiele stammen aus der Core-2.x/3.0-Zeit, gebaut wird mit 3.3.11. `5.79_Global_refresh`
@@ -194,3 +210,12 @@ git diff --cached | grep -c 'eyJhbGciOi'          # nur der Platzhalter darf tre
 - `ha_verlauf` zeigt 10 statt der gewünschten 14 Tage — mehr gibt HAs Recorder per REST
   nicht her. Für die vollen zwei Wochen bräuchte der ESP32 einen WebSocket-Client, oder
   `purge_keep_days` in HA müsste hochgesetzt werden (wirkt erst ab dann, nicht rückwirkend).
+- `material/` ist untracked. Enthält ein Foto des laufenden Panels (HEIC, 2,4 MB).
+  Zu entscheiden: als JPEG konvertiert committen (kleiner, überall lesbar), HEIC direkt
+  committen, oder `material/` ins `.gitignore` als reiner Ablageordner.
+- Größere Zeichenflächen: Der Nutzen des 792 px breiten Panels ist bei einem einzelnen
+  Messwert (`ha_temperatur`) kaum ausgeschöpft — mehrere Sensoren nebeneinander oder
+  Wert plus Verlauf wären naheliegend.
+- Deep Sleep statt `delay()`: Die HA-Sketches halten WLAN dauerhaft aktiv. Für Batterie-
+  betrieb wäre `esp_deep_sleep_start()` der richtige Weg — E-Paper hält sein Bild ohne
+  Strom. Bisher nicht nötig, weil das Board am USB hängt.
