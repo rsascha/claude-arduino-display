@@ -10,3 +10,6 @@ build/
 # Arduino IDE
 .theia/
 .vscode/
+
+# Zugangsdaten — niemals committen
+secrets.h

@@ -139,5 +139,10 @@ Stolperfallen:
 - **Ausrichtung:** `EPD.h` definiert `Rotation 180` — damit steht das Bild bei diesem
   Aufbau auf dem Kopf. In `hello_epaper.ino` wird stattdessen `DISPLAY_ROTATION = 0`
   an `Paint_NewImage()` übergeben; erlaubt sind 0, 90, 180, 270.
-- Andere Schriftgrößen als 8/12/16/24/48 zeichnen kommentarlos **nichts**.
+- **Nur die Schriftgrößen 12, 16, 24 und 48 funktionieren.** Alle anderen — **auch 8** —
+  zeichnen kommentarlos nichts: `EPD_ShowChar()` hat für 8 zwar eine Größenberechnung,
+  aber keinen Zweig zum Font-Array und verlässt die Funktion per `else return;`.
+- **Nur ASCII 32..126.** Die Font-Arrays haben 95 Einträge, der Index ist `chr - ' '`.
+  Ein `°` (176) ergäbe Index 144 und läse über das Array hinaus — Umlaute ebenso.
+  Statt `°C` also `C` schreiben oder den Kreis selbst zeichnen.
 - Zeichenbreite ist `size/2` — Text selbst auf Überlauf prüfen, es wird nicht umgebrochen.

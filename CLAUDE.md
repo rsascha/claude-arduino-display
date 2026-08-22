@@ -41,8 +41,11 @@ Beide müssen gepflegt werden.
 - **`EPD_W` ist 800, sichtbar sind 792.** Zwei SSD1683-Controller mit je einer Hälfte,
   dazwischen 8 ungenutzte Pixel. `Paint_SetPixel()` korrigiert das selbst
   (`if (Xpoint >= 396) Xpoint += 8`). Puffer muss 27200 Byte groß sein.
-- **Schriftgrößen: nur 8, 12, 16, 24, 48.** Andere Werte zeichnen kommentarlos nichts.
+- **Schriftgrößen: nur 12, 16, 24, 48.** Auch 8 zeichnet nichts — `EPD_ShowChar()`
+  kennt dafür keinen Font-Zweig und steigt per `else return;` aus.
   Zeichenbreite ist `size/2`, `EPD_ShowString()` bricht nicht um.
+- **Nur ASCII 32..126.** Font-Arrays haben 95 Einträge, Index ist `chr - ' '`.
+  `°` (176) → Index 144, liest über das Array hinaus. Gilt auch für Umlaute.
 - **Ausrichtung:** `EPD.h` liefert `Rotation 180` — steht bei diesem Aufbau auf dem Kopf.
   Sketches übergeben stattdessen ein eigenes `DISPLAY_ROTATION = 0` an `Paint_NewImage()`.
 
