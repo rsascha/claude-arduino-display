@@ -1,0 +1,12 @@
+# Arduino-Build-Artefakte
+build/
+*.bin.tmp
+*.elf
+*.map
+
+# macOS
+.DS_Store
+
+# Arduino IDE
+.theia/
+.vscode/
