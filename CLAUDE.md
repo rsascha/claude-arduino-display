@@ -63,6 +63,13 @@ Beide müssen gepflegt werden.
   sonst reißt die Linie bei großen Radien auf.
 - **`EPD_DrawCircle()` zeichnet 1 px dünn** und ist auf dem Panel kaum zu sehen. Für
   sichtbare Linien mehrere Kreise mit wachsendem Radius übereinander legen.
+- **Schriftgröße 16 ist auf dem Panel gut lesbar** — für Achsenbeschriftungen reicht sie,
+  24 ist dafür nicht nötig (am realen Gerät geprüft).
+- **Textzeilen brauchen `size` Pixel Höhe, nicht weniger.** Zwei untereinander liegende
+  16er-Zeilen brauchen also mindestens 32 px plus Abstand. In `ha_verlauf` überlappten
+  sich Datumsachse und Fußzeile um 6 px, weil nur 10 px Abstand eingeplant waren.
+  Vertikale Abstände vorher ausrechnen — am Bildschirm sieht man den Fehler erst
+  auf dem Foto.
 
 ## Display-Treiber: Elecrow, nicht GxEPD2
 
@@ -184,8 +191,6 @@ git diff --cached | grep -c 'eyJhbGciOi'          # nur der Platzhalter darf tre
 - Beispiele stammen aus der Core-2.x/3.0-Zeit, gebaut wird mit 3.3.11. `5.79_Global_refresh`
   und die eigenen Sketches kompilieren sauber; `5.79_BLE` ist ungetestet und dürfte wegen
   der geänderten BLE-API in Core 3.x Anpassungen brauchen.
-- Ungeklärt: ob Schriftgröße 16 für Achsenbeschriftungen auf dem Panel gut lesbar ist
-  oder ob 24 nötig wäre. Betrifft `ha_verlauf`, ist eine Zeile.
 - `ha_verlauf` zeigt 10 statt der gewünschten 14 Tage — mehr gibt HAs Recorder per REST
   nicht her. Für die vollen zwei Wochen bräuchte der ESP32 einen WebSocket-Client, oder
   `purge_keep_days` in HA müsste hochgesetzt werden (wirkt erst ab dann, nicht rückwirkend).

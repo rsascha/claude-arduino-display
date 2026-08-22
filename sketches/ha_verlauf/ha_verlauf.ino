@@ -32,7 +32,10 @@ const char* TZ_BERLIN = "CET-1CEST,M3.5.0,M10.5.0/3";
 
 // Zeichenflaeche der Kurve
 const int PLOT_X0 = 62,  PLOT_X1 = 772;
-const int PLOT_Y0 = 46,  PLOT_Y1 = 230;
+// PLOT_Y1 = 222 statt 230: darunter muessen ZWEI Textzeilen der Hoehe 16
+// nebeneinander passen (Datum bei 227..243, Fusszeile bei 248..264) plus
+// der Rahmen bei 269. Mit 230 ueberlappten sich Datum und Fusszeile um 6 px.
+const int PLOT_Y0 = 46,  PLOT_Y1 = 222;
 const int NCOL = PLOT_X1 - PLOT_X0;               // 710 Pixelspalten
 
 // Ein Wert je Pixelspalte. So bleibt der Speicherbedarf konstant, egal wie
@@ -256,7 +259,7 @@ static void drawChart(const char* label, const Series& s, time_t tStart, time_t 
       char d[8];
       localtime_r(&day, &tmv);
       strftime(d, sizeof(d), "%d.%m.", &tmv);
-      EPD_ShowString(x - textWidth(d, 16) / 2, PLOT_Y1 + 6, d, 16, BLACK);
+      EPD_ShowString(x - textWidth(d, 16) / 2, PLOT_Y1 + 5, d, 16, BLACK);
     }
     day += 2 * 86400;
   }
@@ -304,7 +307,7 @@ static void drawChart(const char* label, const Series& s, time_t tStart, time_t 
   strftime(stamp, sizeof(stamp), "%d.%m. %H:%M", &lt);
   snprintf(foot, sizeof(foot), "%d Tage   min %.1f   max %.1f   %d Werte   Stand %s",
            HISTORY_DAYS, s.vmin, s.vmax, s.count, stamp);
-  EPD_ShowString(PLOT_X0, SCREEN_H - 26, foot, 16, BLACK);
+  EPD_ShowString(PLOT_X0, SCREEN_H - 24, foot, 16, BLACK);
 
   endFrame();
 }
