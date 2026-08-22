@@ -18,6 +18,11 @@ make flash SKETCH=examples/5.79_wifi        # anderen Sketch
 Default-Sketch ist `sketches/hello_epaper`. FQBN und Port stehen im `Makefile`;
 der Port wird per `arduino-cli board list` automatisch erkannt.
 
+`make monitor` funktioniert nur interaktiv im Terminal: `arduino-cli monitor`
+beendet sich ohne TTY sofort mit Exit-Code 0 und ohne Ausgabe. Für automatisiertes
+Mitlesen den Port direkt öffnen und dabei RTS pulsen (löst den Reset aus, sonst
+verpasst man die Boot-Ausgabe) — Muster siehe Commit-Historie zu `ha_verlauf`.
+
 ## Verifizierte Umgebung
 
 | | |
@@ -48,6 +53,16 @@ Beide müssen gepflegt werden.
   `°` (176) → Index 144, liest über das Array hinaus. Gilt auch für Umlaute.
 - **Ausrichtung:** `EPD.h` liefert `Rotation 180` — steht bei diesem Aufbau auf dem Kopf.
   Sketches übergeben stattdessen ein eigenes `DISPLAY_ROTATION = 0` an `Paint_NewImage()`.
+- **`Paint_SetPixel()` prüft die Koordinaten NICHT.** Es rechnet direkt
+  `Addr = X/8 + Y*widthByte` und schreibt in den Puffer; die Parameter sind `uint16_t`,
+  ein negativer Wert wird klaglos zu einer riesigen Zahl. Eigener Zeichencode braucht
+  einen `safePixel()`-Wrapper, der in `int` rechnet und vorher abfängt — sonst ist ein
+  Koordinatenfehler kein falsches Bild, sondern ein Speicherüberschreiber.
+- **Es gibt keine Bogen-Funktion.** `EPD.h` kann Linie, Rechteck, Kreis (`mode` 0 = Umriss,
+  1 = gefüllt) — mehr nicht. Bögen selbst aus Pixeln bauen, Schrittweite `0.5f / radius`,
+  sonst reißt die Linie bei großen Radien auf.
+- **`EPD_DrawCircle()` zeichnet 1 px dünn** und ist auf dem Panel kaum zu sehen. Für
+  sichtbare Linien mehrere Kreise mit wachsendem Radius übereinander legen.
 
 ## Display-Treiber: Elecrow, nicht GxEPD2
 
@@ -74,18 +89,103 @@ vermeiden: Arduino behandelt ein `src/` *innerhalb* eines Sketches als Sonderfal
 (einziger rekursiv kompilierter Unterordner). Im Sketchbook-Wurzelverzeichnis sind
 zusätzlich `libraries/` und `hardware/` reserviert.
 
+## Arduino-Eigenheiten
+
+- **Eigene `struct`-Typen gehören in eine `.h`, nicht in die `.ino`.** Die Toolchain
+  erzeugt automatisch Funktionsprototypen und setzt sie an den Dateianfang — *vor*
+  selbst definierte Typen. Eine Funktion mit `struct Foo` als Parameter scheitert dann
+  an `'Foo' has not been declared`. Aus einem Header ist der Typ rechtzeitig da.
+  Beispiel: `sketches/ha_verlauf/series.h`.
+
+## Home Assistant
+
+Instanz: `http://192.168.178.83:8123` (HTTP, kein TLS — spart auf dem ESP32 die
+gesamte Zertifikatsbehandlung). Zugangsdaten in `secrets.h` je Sketch, per
+`.gitignore` ausgeschlossen; Vorlage ist `secrets.h.example`.
+
+```c
+GET /api/states/<entity_id>
+Authorization: Bearer <langlebiger Zugriffstoken>
+```
+
+**Fallen, die alle schon zugeschlagen haben:**
+
+- **Ohne `end_time` liefert `/api/history/period/<start>` genau EINEN Tag** ab `start`,
+  nicht bis jetzt. Eine 14-Tage-Abfrage gibt sonst kommentarlos einen einzelnen Tag aus
+  der Mitte zurück — sieht aus wie fehlende Daten, ist ein fehlender Parameter.
+- **Zeitstempel als `Z` schreiben, nicht `+00:00`.** Das `+` wird im Query-String zum
+  Leerzeichen dekodiert, HA antwortet mit `Invalid end_time`. Sieht nach kaputtem Datum
+  aus, ist ein Kodierungsproblem.
+- **Rohdaten reichen nur ~10 Tage zurück** (`purge_keep_days`). Längere Zeiträume liegen
+  in der Langzeitstatistik (unbegrenzt, benötigt `state_class: measurement`) — die gibt
+  es aber **nur über WebSocket** (`recorder/statistics_during_period`), nicht über REST.
+- **`entity_id` und Anzeigename passen nicht zusammen.** Bei den SONOFF-Sensoren heißt
+  `sensor.temperatur_sonoff_snzb_02d_temperatur` „Temperatur **Badezimmer**"; das
+  Wohnzimmer ist `sensor.wohnzimmer_temperatur_sonoff_snzb_02d_temperatur`. Immer über
+  `friendly_name` verifizieren, nie über die ID raten.
+- **`unavailable` und `unknown` sind gültige Zustände**, keine Fehler. `atof()` macht
+  daraus 0.0 — in einer Kurve reißt das den Verlauf auf 0 Grad.
+- **Antworten nicht mit `Arduino_JSON` parsen, wenn sie groß sind.** 10 Tage History sind
+  ~19 KB; die Bibliothek baut daraus einen Objektbaum mit einem Vielfachen an RAM-Bedarf.
+  Stattdessen direkt mit `strstr()` nach `"state":"` und `"last_changed":"` scannen.
+
+### MCP-Server
+
+Ein Home-Assistant-MCP ist im **User-Scope** eingetragen (`~/.claude.json`, also außerhalb
+des Repos und in allen Projekten verfügbar):
+
+```bash
+claude mcp add -s user home-assistant -- /opt/homebrew/bin/uvx \
+  --with 'mcp<2.0.0' mcp-proxy --transport streamablehttp <interne-URL>
+```
+
+**Der MCP liefert Zeitstempel in lokaler Zeit, die REST-API in UTC.** Wer den Sketch
+anhand der MCP-Ausgabe baut, bekommt eine um zwei Stunden verschobene Zeitachse.
+Faustregel: MCP zum Stöbern, `curl` zum Verifizieren dessen, was der ESP32 sieht.
+
+## Sketches
+
+| Sketch | Inhalt |
+|---|---|
+| `hello_epaper` | Text, Formen, Grundlayout — der Einstieg |
+| `smiley` | eigene Bogen-Funktion, `safePixel()`, Kreise mit Strichstärke |
+| `ha_temperatur` | ein HA-Sensorwert groß auf dem Display |
+| `ha_verlauf` | Temperaturkurve über 10 Tage mit Gitter und Achsen |
+
+Fehler gehören **auf das Display**, nicht nur ins Log — sonst sieht man bei einem Problem
+nur ein leeres Panel. `ha_temperatur` und `ha_verlauf` zeigen HTTP 401/404 mit einem
+Hinweis auf die wahrscheinliche Ursache an.
+
 ## Struktur
 
 ```
-sketches/          Eigene Sketches
+sketches/          Eigene Sketches (secrets.h darin ist gitignored)
 libraries/         Elecrow-Library-Bundle (zugleich Sketchbook-libraries/)
 examples/          Offizielle Elecrow-Beispiele + Demos — Vorlagen zum Kopieren
 factory_firmware/  Werksfirmware als Backup
 Makefile
 ```
 
+## Geheimnisse
+
+`secrets.h` liegt neben jeder `.ino`, die Zugangsdaten braucht, und ist per `.gitignore`
+ausgeschlossen — committet wird nur `secrets.h.example` mit Platzhaltern. **Die
+`.gitignore`-Regel muss stehen, bevor die Datei existiert**: Ist sie einmal committet,
+hilft ein nachträgliches `.gitignore` nicht mehr, der Token steht dann dauerhaft in der
+Historie. Vor jedem Commit prüfen:
+
+```bash
+git check-ignore -v sketches/<name>/secrets.h     # muss anschlagen
+git diff --cached | grep -c 'eyJhbGciOi'          # nur der Platzhalter darf treffen
+```
+
 ## Offene Punkte
 
 - Beispiele stammen aus der Core-2.x/3.0-Zeit, gebaut wird mit 3.3.11. `5.79_Global_refresh`
-  und `sketches/hello_epaper` kompilieren sauber; `5.79_BLE` ist ungetestet und dürfte
-  wegen der geänderten BLE-API in Core 3.x Anpassungen brauchen.
+  und die eigenen Sketches kompilieren sauber; `5.79_BLE` ist ungetestet und dürfte wegen
+  der geänderten BLE-API in Core 3.x Anpassungen brauchen.
+- Ungeklärt: ob Schriftgröße 16 für Achsenbeschriftungen auf dem Panel gut lesbar ist
+  oder ob 24 nötig wäre. Betrifft `ha_verlauf`, ist eine Zeile.
+- `ha_verlauf` zeigt 10 statt der gewünschten 14 Tage — mehr gibt HAs Recorder per REST
+  nicht her. Für die vollen zwei Wochen bräuchte der ESP32 einen WebSocket-Client, oder
+  `purge_keep_days` in HA müsste hochgesetzt werden (wirkt erst ab dann, nicht rückwirkend).
