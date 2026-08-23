@@ -17,9 +17,13 @@ ist, steht das ausdrücklich dabei.
 **Abmessungen** (S. 2): 167,91 × 56,94 mm Außenmaß, aktive Fläche 139,00 × 47,74 mm.
 
 **Bedienelemente** (S. 2 Abbildung, S. 3 Tabelle): An der Kante MENU, Rotary Switch
-(Drehschalter) und EXIT; auf der Platine BOOT und RESET. Die Rückseiten-Abbildung auf S. 2
-zeigt zusätzlich PWR, TF-Kartenschacht, GPIO-Header, USB-C, BAT-Anschluss (SH1.0-2P) und
-das ESP32-S3-WROOM-1-N8R8-Modul.
+(Drehschalter) und EXIT; auf der Platine BOOT und RESET. Die Abbildung auf S. 2 zeigt die
+**Rückseite mit USB-C unten** und dort zusätzlich PWR, TF-Kartenschacht, GPIO-Header,
+BAT-Anschluss (SH1.0-2P) und das ESP32-S3-WROOM-1-N8R8-Modul.
+
+**Achtung bei der Reihenfolge:** Weil die Abbildung die Rückseite zeigt, steht sie beim
+Blick auf das Display mit USB oben und Elementen links kopf — dann ist von oben nach unten
+**EXIT, Drehschalter, MENU** (am Gerät geprüft, GPIOs in §4).
 
 **Spezifikation** (S. 3): 272 (H) × 792 (L) Pixel, Pixelabstand 0,1755 mm, Anzeigespannung
 2,2–3,7 V, Betrieb 0–50 °C, Lagerung −25–70 °C, 4-Draht-SPI (3-Draht möglich).
@@ -195,7 +199,7 @@ Board nicht, nur das Modul.
 | 0 | BOOT-Taster (Strapping) | Handbuch S. 2 |
 | 1 | EXIT | `5.79_key.ino:9` |
 | 2 | MENU | `5.79_key.ino:8` |
-| 4, 5, 6 | Drehschalter (2 Richtungen + Druck) — **erschlossen** | `5.79_key.ino:10-12` |
+| 4, 5, 6 | Drehschalter: 4 = hoch, 5 = Druck, 6 = runter | am Gerät geprüft, 23.08.2026 |
 | 3, 8, 9, 14, 15, 16, 17, 18, 19, 20, 21, 38 | GPIO-Header, 12 Pins | `5.79_GPIO.ino:49` |
 | 7 | Display-Spannung, muss HIGH | alle Beispiele |
 | 10, 13, 39, 40 | TF-Karte: CS, MISO, SCK, MOSI | `5.79_TF.ino:6-9` |
@@ -215,11 +219,14 @@ am CH340, nicht am nativen USB des ESP32.
 
 ## 5. Was in keinem der drei PDFs steht
 
-- Die **GPIO-Zuordnung des Boards** — kommt ausschließlich aus dem Beispielcode.
+- Die **GPIO-Zuordnung des Boards** — kommt ausschließlich aus dem Beispielcode
+  (die fünf Tasten-GPIOs sind inzwischen am Gerät bestätigt, §4).
 - Die **+0x80-Verschiebung der Slave-Register** (siehe §2).
 - Der Wert **`0xDC`** für den Teilrefresh (siehe §2).
 - Die **Waveform-Tabellen des konkreten Panels**. Sie liegen im OTP des Displays; das
   Datenblatt beschreibt nur Format und Suchmechanismus (S. 16–20, §6.7–6.11).
 - Ob der Drehschalter ein **Encoder mit Rastung** ist oder drei getrennte Kontakte. Aus
-  `5.79_key` lässt sich beides lesen. Am Gerät prüfbar mit
-  `make flash SKETCH=examples/5.79_key`.
+  `5.79_key` lässt sich beides lesen. Die drei GPIOs sind am 23.08.2026 verifiziert
+  (4 = hoch, 5 = Druck, 6 = runter, siehe §4) — die *Bauart* dahinter aber nicht: dass
+  jede Drehrichtung genau einen Pin auslöst, schließt einen Quadratur-Encoder nicht aus,
+  dessen zwei Leitungen der Beispielcode nur einzeln abfragt.

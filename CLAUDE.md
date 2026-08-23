@@ -224,6 +224,12 @@ git diff --cached | grep -c 'eyJhbGciOi'          # nur der Platzhalter darf tre
   das Diff vorher an. Gilt auch, wenn die Änderung offensichtlich richtig ist und wenn
   vorher schon einmal committet werden durfte; die Erlaubnis gilt nur für den einen Commit.
 - **Vor jedem Commit auf Geheimnisse prüfen** (siehe Abschnitt *Geheimnisse*).
+- **Nie ungefragt flashen.** Vor jedem `make flash` fragen — auch beim Zurückflashen des
+  vorherigen Sketches und auch, wenn vorher schon einmal geflasht werden durfte. Auf dem
+  Board läuft ein produktiv genutzter Sketch; ein Flash überschreibt ihn sofort.
+  Achtung: `make flash` **ohne** `SKETCH=` nimmt den Makefile-Default `hello_epaper`,
+  nicht den zuletzt geflashten Sketch — zum Zurückflashen immer explizit
+  `SKETCH=sketches/ha_verlauf` angeben.
 
 ## Stand
 

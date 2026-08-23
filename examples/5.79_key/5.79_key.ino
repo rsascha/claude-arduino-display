@@ -28,7 +28,7 @@ void count_btn(int NUM[5])
 
   // EPD (Electronic Paper Display) initialization
   EPD_GPIOInit();
-  Paint_NewImage(ImageBW, EPD_W, EPD_H, Rotation, WHITE);
+  Paint_NewImage(ImageBW, EPD_W, EPD_H, 0, WHITE);  // 0 statt Rotation(180): USB-Anschluss oben
   Paint_Clear(WHITE);
 
   // Clear the display screen and initialize it
@@ -50,11 +50,11 @@ void count_btn(int NUM[5])
   buffer[length] = '\0';
   EPD_ShowString(0, 0 + 2 * 20, buffer, 16, BLACK);
 
-  length = sprintf(buffer, "NEXT__NUM:%d", NUM[3]);
+  length = sprintf(buffer, "NEXT_KEY_NUM:%d", NUM[3]);
   buffer[length] = '\0';
   EPD_ShowString(0, 0 + 3 * 20, buffer, 16, BLACK);
 
-  length = sprintf(buffer, "OK_NUM:%d", NUM[4]);
+  length = sprintf(buffer, "OK_KEY_NUM:%d", NUM[4]);
   buffer[length] = '\0';
   EPD_ShowString(0, 0 + 4 * 20, buffer, 16, BLACK);
 
@@ -136,7 +136,7 @@ void loop() {
       OK_NUM++; 
       flag = 1; 
     }
-  }Reset Tag
+  }  // Reset Tag   <- Textrest von Elecrow, auskommentiert (kompilierte sonst nicht)
   
   // If a button is pressed, update the display content
   if (flag == 1)

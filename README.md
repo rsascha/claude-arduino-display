@@ -66,20 +66,28 @@ programmierbar, zwei liegen auf der Platine und sind fest verdrahtet:
 | BOOT | Platine | hält GPIO 0 auf LOW → Flash-Modus |
 | RESET | Platine | zieht EN auf LOW → Neustart |
 
-Das Handbuch nennt keine GPIOs. `examples/5.79_key` definiert fünf Eingänge, deren
-Namen sich den Elementen zuordnen lassen — die Zuordnung der drei Rotary-Leitungen
-ist **erschlossen, nicht am Gerät verifiziert**:
+Das Handbuch nennt keine GPIOs. Sie stehen in `examples/5.79_key`; die Zuordnung wurde
+am 23.08.2026 **am Gerät verifiziert** — jedes Element einzeln betätigt und der Zähler
+auf dem Panel abgelesen. Die Positionsangaben gelten für die Ausrichtung **Querformat,
+USB-Anschluss oben, Bedienelemente an der linken Kante**:
 
-| `#define` in `5.79_key` | GPIO | vermutlich |
-|---|---|---|
-| `HOME_KEY` | 2 | MENU |
-| `EXIT_KEY` | 1 | EXIT |
-| `PRV_KEY` | 6 | Drehschalter, eine Drehrichtung |
-| `NEXT_KEY` | 4 | Drehschalter, andere Drehrichtung |
-| `OK_KEY` | 5 | Druck auf den Drehschalter |
+| Position | Element | GPIO | `#define` in `5.79_key` |
+|---|---|---|---|
+| oben | EXIT | 1 | `EXIT_KEY` |
+| Mitte, Rad nach oben | Drehschalter | 4 | `NEXT_KEY` |
+| Mitte, Rad drücken | Drehschalter | 5 | `OK_KEY` |
+| Mitte, Rad nach unten | Drehschalter | 6 | `PRV_KEY` |
+| unten | MENU | 2 | `HOME_KEY` |
 
-Prüfen lässt sich das mit `make flash SKETCH=examples/5.79_key` und dem seriellen
-Monitor: Jeder Tastendruck schreibt seinen Namen auf Display und Konsole.
+Die Reihenfolge an der Kante ist damit **EXIT – Drehschalter – MENU**. Das Handbuch (S. 2)
+zeigt sie umgekehrt, weil seine Abbildung die **Rückseite** mit USB-C unten darstellt —
+gedreht auf die obige Ausrichtung kehrt sich die Reihenfolge um.
+
+Nachvollziehen lässt sich das mit `make flash SKETCH=examples/5.79_key`: Jeder Tastendruck
+schreibt seinen Namen auf Display und Konsole. Zwei Dinge sind an der Elecrow-Vorlage
+angepasst — ein Textrest `Reset Tag` mitten im Code, der das Kompilieren verhinderte,
+und `Paint_NewImage(..., 0, ...)` statt `Rotation` (180), damit das Bild bei USB oben
+richtig herum steht.
 
 Die Taster liegen gegen Masse und werden mit `pinMode(pin, INPUT)` gelesen;
 gedrückt ist **LOW**. GPIO 41 schaltet die Power-LED (`examples/5.79_PWR`).
