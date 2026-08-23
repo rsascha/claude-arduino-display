@@ -65,6 +65,11 @@ Beide müssen gepflegt werden.
   sichtbare Linien mehrere Kreise mit wachsendem Radius übereinander legen.
 - **Schriftgröße 16 ist auf dem Panel gut lesbar** — für Achsenbeschriftungen reicht sie,
   24 ist dafür nicht nötig (am realen Gerät geprüft).
+- **Drei Bedienelemente an der Kante: MENU, Drehschalter, EXIT** — alle frei
+  programmierbar, gegen Masse, `pinMode(pin, INPUT)`, gedrückt ist LOW. BOOT und RESET
+  sitzen auf der Platine und sind fest verdrahtet. Dass `examples/5.79_key` fünf Tasten
+  kennt, ist kein Fehler: der Drehschalter belegt drei davon (zwei Drehrichtungen plus
+  Druck). GPIO-Zuordnung und Quelle stehen in `README.md` → *Bedienelemente*.
 - **Textzeilen brauchen `size` Pixel Höhe, nicht weniger.** Zwei untereinander liegende
   16er-Zeilen brauchen also mindestens 32 px plus Abstand. In `ha_verlauf` überlappten
   sich Datumsachse und Fußzeile um 6 px, weil nur 10 px Abstand eingeplant waren.
@@ -170,7 +175,7 @@ sketches/          Eigene Sketches (secrets.h darin ist gitignored)
 libraries/         Elecrow-Library-Bundle (zugleich Sketchbook-libraries/)
 examples/          Offizielle Elecrow-Beispiele + Demos — Vorlagen zum Kopieren
 factory_firmware/  Werksfirmware als Backup
-material/          Fotos des laufenden Panels (JPEG; *.HEIC ist gitignored)
+material/          Handbuch (PDF) und Fotos des Panels (JPEG; *.HEIC ist gitignored)
 Makefile
 ```
 

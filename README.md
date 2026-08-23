@@ -52,6 +52,38 @@ Maßgeblich ist `spi.h` in den Beispielen — **nicht** `DEV_Config.h` aus der `
 
 Ohne `digitalWrite(7, HIGH)` bleibt das Panel stromlos und zeigt nichts an.
 
+## Bedienelemente
+
+Laut Benutzerhandbuch (`material/crowpanel-5.79-benutzerhandbuch.pdf`, S. 2–3) hat das
+Board fünf Bedienelemente. Drei davon sitzen an der Gehäusekante und sind frei
+programmierbar, zwei liegen auf der Platine und sind fest verdrahtet:
+
+| Element | Lage | Funktion |
+|---|---|---|
+| MENU | Kante | frei programmierbar |
+| Rotary Switch (Drehschalter) | Kante | frei programmierbar, dreh- **und** drückbar |
+| EXIT | Kante | frei programmierbar |
+| BOOT | Platine | hält GPIO 0 auf LOW → Flash-Modus |
+| RESET | Platine | zieht EN auf LOW → Neustart |
+
+Das Handbuch nennt keine GPIOs. `examples/5.79_key` definiert fünf Eingänge, deren
+Namen sich den Elementen zuordnen lassen — die Zuordnung der drei Rotary-Leitungen
+ist **erschlossen, nicht am Gerät verifiziert**:
+
+| `#define` in `5.79_key` | GPIO | vermutlich |
+|---|---|---|
+| `HOME_KEY` | 2 | MENU |
+| `EXIT_KEY` | 1 | EXIT |
+| `PRV_KEY` | 6 | Drehschalter, eine Drehrichtung |
+| `NEXT_KEY` | 4 | Drehschalter, andere Drehrichtung |
+| `OK_KEY` | 5 | Druck auf den Drehschalter |
+
+Prüfen lässt sich das mit `make flash SKETCH=examples/5.79_key` und dem seriellen
+Monitor: Jeder Tastendruck schreibt seinen Namen auf Display und Konsole.
+
+Die Taster liegen gegen Masse und werden mit `pinMode(pin, INPUT)` gelesen;
+gedrückt ist **LOW**. GPIO 41 schaltet die Power-LED (`examples/5.79_PWR`).
+
 ## Verwendung
 
 ```bash
@@ -70,6 +102,7 @@ sketches/         Eigene Sketches (hello_epaper, ...)
 libraries/        Elecrow-Libraries — zugleich Sketchbook-libraries/
 examples/         Offizielle Elecrow-Beispiele + Demos
 factory_firmware/ Werksfirmware als Backup
+material/         Handbuch (PDF) und Fotos des laufenden Panels
 Makefile          Build-/Flash-Targets
 ```
 
@@ -107,6 +140,7 @@ mit `arduino-cli config set directories.user ~/Documents/Arduino`.
 - [Elecrow Wiki – 5.79" HMI Display](https://www.elecrow.com/wiki/CrowPanel_ESP32_E-paper_5.79-inch_HMI_Display.html)
 - [Elecrow Wiki – Arduino Tutorial](https://www.elecrow.com/wiki/CrowPanel_ESP32_E-Paper_5.79inch_Arduino_Tutorial.html)
 - [GitHub – Elecrow-RD/CrowPanel-ESP32-5.79-E-paper-HMI-Display-with-272-792](https://github.com/Elecrow-RD/CrowPanel-ESP32-5.79-E-paper-HMI-Display-with-272-792)
+- Benutzerhandbuch (deutsch): `material/crowpanel-5.79-benutzerhandbuch.pdf` — Rückseiten-Beschriftung, Bedienelemente, Spezifikation
 
 ## Zeichen-API (Elecrow `EPD.h`)
 
