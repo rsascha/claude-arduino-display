@@ -113,6 +113,8 @@ sonst gehen sie beim nächsten Kopieren verloren.
 
 ## Sketch-Ordner anlegen
 
+Ausführlich samt Doku-Pflicht: `sketches/CLAUDE.md`.
+
 Ordnername und `.ino` müssen **identisch** heißen:
 
 ```
@@ -197,6 +199,7 @@ Hinweis auf die wahrscheinliche Ursache an.
 
 ```
 sketches/          Eigene Sketches (secrets.h darin ist gitignored)
+                   → `sketches/CLAUDE.md`: neue Sketches gehören nach `README.md`
 libraries/         Elecrow-Library-Bundle (zugleich Sketchbook-libraries/)
 examples/          Offizielle Elecrow-Beispiele + Demos — Vorlagen zum Kopieren
 factory_firmware/  Werksfirmware als Backup
