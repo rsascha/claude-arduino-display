@@ -138,17 +138,23 @@ kommandos:
     belegt_durch: datenblatt
 
 # Parameter fuer 0x22; gestartet wird die Sequenz danach mit 0x20.
+# `praxis` = am Geraet verglichen mit sketches/ha_umschalten, 23.08.2026.
 update_modi:
   - wert: 0xF7
     treiber: EPD_Update()
     seite: 29
     belegt_durch: datenblatt
     bedeutung: Takt + Analog an, Temperatur laden, LUT laden (3-Farb-Modus), anzeigen
+    praxis: >-
+      Mit EPD_Display_Clear() davor wird das Panel mehrfach komplett schwarz und der
+      Wechsel dauert spuerbar. Nur noetig, um Ghosting ueber viele Durchgaenge
+      abzubauen — nicht bei jedem Bild.
   - wert: 0xC7
     treiber: EPD_FastUpdate()
     seite: 29
     belegt_durch: datenblatt
     bedeutung: Takt + Analog an, anzeigen (3-Farb-Modus), ohne Temperatur/LUT
+    praxis: Schnell und sauber — die richtige Wahl fuer einen Vollbildwechsel.
   - wert: 0xDC
     treiber: EPD_PartUpdate()
     seite: 29
@@ -158,6 +164,11 @@ update_modi:
       Steht in keiner Zeile der Tabelle auf Seite 29. Die Bedeutung ist aus dem
       Bitmuster zurueckgerechnet und passt zum Teilrefresh, ist aber nicht
       dokumentiert.
+    praxis: >-
+      Fuer einen Vollbildwechsel unbrauchbar: EPD_Display() schreibt immer das
+      komplette RAM beider Controller, ein Fenster gibt es nicht. Sinnvoll erst,
+      wenn der RAM-Adressbereich (0x44/0x45) vorher auf den geaenderten Ausschnitt
+      eingeengt wird — Fortschrittsbalken, tickende Uhr.
 
 # Der Treiber nutzt durchgehend die 3-Farb-Varianten, obwohl das Panel S/W ist.
 # Fuer S/W waeren 0xFF und 0xCF vorgesehen; es laeuft trotzdem, vermutlich weil

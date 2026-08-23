@@ -62,6 +62,16 @@ Beide müssen gepflegt werden.
   sonst reißt die Linie bei großen Radien auf.
 - **`EPD_DrawCircle()` zeichnet 1 px dünn** und ist auf dem Panel kaum zu sehen. Für
   sichtbare Linien mehrere Kreise mit wachsendem Radius übereinander legen.
+- **Fast-Update ist der Regelfall, nicht Vollrefresh.** Die drei Modi unterscheiden sich
+  nur im Parameter zu `0x22` (`0xF7`/`0xC7`/`0xDC`). Am Gerät verglichen (`ha_umschalten`):
+  `EPD_FastUpdate()` ist schnell und sauber — die richtige Wahl für einen Bildwechsel.
+  Der Vollrefresh *mit* `EPD_Display_Clear()` davor lässt das Panel **mehrfach** komplett
+  schwarz werden und dauert spürbar; er verhindert nur Ghosting über viele Durchgänge.
+  `EPD_PartUpdate()` ist für Vollbildwechsel unbrauchbar: `EPD_Display()` schreibt immer
+  das ganze RAM beider Controller. Partial lohnt erst mit eingeengtem RAM-Adressbereich
+  (`0x44`/`0x45`) für kleine Ausschnitte — Fortschrittsbalken, tickende Uhr.
+- **Refresh-Zyklen sind endlich.** Sekundentakt ist als Test in Ordnung, als Dauerbetrieb
+  nicht. `ha_umschalten` ist ein Testsketch, kein Betriebszustand.
 - **Schriftgröße 16 ist auf dem Panel gut lesbar** — für Achsenbeschriftungen reicht sie,
   24 ist dafür nicht nötig (am realen Gerät geprüft).
 - **Drei Bedienelemente an der Kante: MENU, Drehschalter, EXIT** — alle frei
@@ -162,6 +172,7 @@ Faustregel: MCP zum Stöbern, `curl` zum Verifizieren dessen, was der ESP32 sieh
 | `smiley` | eigene Bogen-Funktion, `safePixel()`, Kreise mit Strichstärke |
 | `ha_temperatur` | ein HA-Sensorwert groß auf dem Display |
 | `ha_verlauf` | Temperaturkurve über 10 Tage mit Gitter und Achsen |
+| `ha_umschalten` | zwei Sensoren im Wechsel; Testsketch für die drei Refresh-Modi |
 
 Fehler gehören **auf das Display**, nicht nur ins Log — sonst sieht man bei einem Problem
 nur ein leeres Panel. `ha_temperatur` und `ha_verlauf` zeigen HTTP 401/404 mit einem
@@ -256,6 +267,10 @@ unter *Quellen*.
 - Größere Zeichenflächen: Der Nutzen des 792 px breiten Panels ist bei einem einzelnen
   Messwert (`ha_temperatur`) kaum ausgeschöpft — mehrere Sensoren nebeneinander oder
   Wert plus Verlauf wären naheliegend.
+- `ha_verlauf` fährt bei **jeder** Aktualisierung den vollen Löschzyklus. Nach dem
+  Vergleich in `ha_umschalten` wäre `EPD_FastUpdate()` als Regelfall die bessere Wahl,
+  mit einem Vollrefresh nur alle paar Durchgänge gegen Ghosting. Bewusst noch nicht
+  umgestellt — Sascha wollte erst weitere Tests machen.
 - Deep Sleep statt `delay()`: Die HA-Sketches halten WLAN dauerhaft aktiv. Für Batterie-
   betrieb wäre `esp_deep_sleep_start()` der richtige Weg — E-Paper hält sein Bild ohne
   Strom. Bisher nicht nötig, weil das Board am USB hängt.

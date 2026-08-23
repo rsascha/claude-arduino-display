@@ -196,6 +196,32 @@ Stolperfallen:
   Statt `°C` also `C` schreiben oder den Kreis selbst zeichnen.
 - Zeichenbreite ist `size/2` — Text selbst auf Überlauf prüfen, es wird nicht umgebrochen.
 
+### Die drei Refresh-Modi
+
+`EPD_Update()`, `EPD_FastUpdate()` und `EPD_PartUpdate()` unterscheiden sich im Code nur
+im Parameter zu Kommando `0x22` (`0xF7`, `0xC7`, `0xDC`; SSD1683-Datenblatt S. 29). Wie
+verschieden sie am Panel aussehen, zeigt `sketches/ha_umschalten`, das im 5-Sekunden-Takt
+zwischen zwei Kurven umblendet und dabei die Modi durchwechselt. Befund am realen Gerät:
+
+| Modus | Verhalten | wofür |
+|---|---|---|
+| `EPD_Update()` mit `EPD_Display_Clear()` davor | dauert lange, das Panel wird **mehrfach** komplett schwarz | selten, gegen Ghosting |
+| `EPD_FastUpdate()` | schnell und sauber | **Regelfall für Vollbildwechsel** |
+| `EPD_PartUpdate()` | für Vollbildwechsel unbrauchbar | nur für kleine Ausschnitte |
+
+Dass Partial hier nichts bringt, hat einen Grund: `EPD_Display()` schreibt immer das
+**komplette** RAM beider Controller, ein Fenster gibt es nicht. Der Modus lohnt sich erst,
+wenn man vorher den RAM-Adressbereich (`0x44`/`0x45`, S. 34–35) auf den geänderten
+Ausschnitt einengt — für eine Fortschrittsanzeige oder eine tickende Uhr also, nicht für
+ein neues Vollbild.
+
+Das lange Schwarzwerden von `EPD_Update()` kommt nicht vom Kommando selbst, sondern vom
+Löschzyklus davor: erst wird das Panel weiß geschrieben und aktualisiert, dann das Bild.
+`ha_verlauf` macht das bei jeder Aktualisierung.
+
+**E-Paper verträgt keine unbegrenzte Zahl an Refresh-Zyklen.** Ein Sketch, der im
+Sekundentakt aktualisiert, ist als Test in Ordnung, als Dauerbetrieb nicht.
+
 ## Lizenz
 
 Der eigene Code und die Dokumentation stehen unter MIT (siehe `LICENSE`).
