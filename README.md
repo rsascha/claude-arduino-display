@@ -141,6 +141,11 @@ mit `arduino-cli config set directories.user ~/Documents/Arduino`.
 - [Elecrow Wiki – Arduino Tutorial](https://www.elecrow.com/wiki/CrowPanel_ESP32_E-Paper_5.79inch_Arduino_Tutorial.html)
 - [GitHub – Elecrow-RD/CrowPanel-ESP32-5.79-E-paper-HMI-Display-with-272-792](https://github.com/Elecrow-RD/CrowPanel-ESP32-5.79-E-paper-HMI-Display-with-272-792)
 - Benutzerhandbuch (deutsch): `material/crowpanel-5.79-benutzerhandbuch.pdf` — Rückseiten-Beschriftung, Bedienelemente, Spezifikation
+- [SSD1683 Datenblatt](https://www.elecrow.com/download/product/DIS08792E/SSD1683_Datasheet.PDF) — Display-Controller, 49 Seiten
+- [ESP32-S3-WROOM-1 Datenblatt](https://www.elecrow.com/download/product/DIS08792E/esp32-s3-wroom-1_datasheet.pdf) — Modul, Pinout, elektrische Werte
+
+Die beiden Datenblatt-Links stehen im Handbuch nur als QR-Code (S. 4–5); der Text des
+PDFs enthält sie nicht.
 
 ## Zeichen-API (Elecrow `EPD.h`)
 
