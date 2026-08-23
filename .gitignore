@@ -13,3 +13,6 @@ build/
 
 # Zugangsdaten — niemals committen
 secrets.h
+
+# Foto-Originale: bleiben lokal, committet wird die verkleinerte JPEG
+material/*.HEIC

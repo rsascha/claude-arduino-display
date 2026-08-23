@@ -170,7 +170,16 @@ sketches/          Eigene Sketches (secrets.h darin ist gitignored)
 libraries/         Elecrow-Library-Bundle (zugleich Sketchbook-libraries/)
 examples/          Offizielle Elecrow-Beispiele + Demos — Vorlagen zum Kopieren
 factory_firmware/  Werksfirmware als Backup
+material/          Fotos des laufenden Panels (JPEG; *.HEIC ist gitignored)
 Makefile
+```
+
+Fotos vom iPhone kommen als HEIC — auf GitHub nicht anzeigbar und als JPEG in voller
+Auflösung sogar größer als das Original. Committet wird deshalb eine verkleinerte JPEG,
+das HEIC bleibt lokal:
+
+```bash
+sips -s format jpeg -s formatOptions 85 -Z 2000 material/FOTO.HEIC --out material/FOTO_2000px.jpg
 ```
 
 ## Geheimnisse
@@ -200,7 +209,7 @@ git diff --cached | grep -c 'eyJhbGciOi'          # nur der Platzhalter darf tre
 ## Stand
 
 Auf dem Board läuft `sketches/ha_verlauf`, Aktualisierung alle 30 Minuten.
-Alles committet, Arbeitsverzeichnis sauber bis auf `material/` (siehe unten).
+Alles committet, Arbeitsverzeichnis sauber.
 
 ## Offene Punkte
 
@@ -210,9 +219,6 @@ Alles committet, Arbeitsverzeichnis sauber bis auf `material/` (siehe unten).
 - `ha_verlauf` zeigt 10 statt der gewünschten 14 Tage — mehr gibt HAs Recorder per REST
   nicht her. Für die vollen zwei Wochen bräuchte der ESP32 einen WebSocket-Client, oder
   `purge_keep_days` in HA müsste hochgesetzt werden (wirkt erst ab dann, nicht rückwirkend).
-- `material/` ist untracked. Enthält ein Foto des laufenden Panels (HEIC, 2,4 MB).
-  Zu entscheiden: als JPEG konvertiert committen (kleiner, überall lesbar), HEIC direkt
-  committen, oder `material/` ins `.gitignore` als reiner Ablageordner.
 - Größere Zeichenflächen: Der Nutzen des 792 px breiten Panels ist bei einem einzelnen
   Messwert (`ha_temperatur`) kaum ausgeschöpft — mehrere Sensoren nebeneinander oder
   Wert plus Verlauf wären naheliegend.
