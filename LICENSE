@@ -1,0 +1,47 @@
+MIT License
+
+Copyright (c) 2026 Sascha Rose
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+Diese Lizenz gilt für den in diesem Repository selbst geschriebenen Code und
+die Dokumentation, also im Wesentlichen für `sketches/`, `Makefile`, `README.md`
+und `CLAUDE.md`.
+
+Nicht davon erfasst ist Fremdmaterial, das hier nur mitgeführt wird und unter
+den Bedingungen seiner jeweiligen Rechteinhaber steht:
+
+| Pfad | Herkunft | Lizenz |
+|---|---|---|
+| `libraries/GxEPD2/` | Jean-Marc Zingg | GPL-3.0 |
+| `libraries/EPaperDrive-main/` | — | AGPL-3.0 |
+| `libraries/Arduino_JSON/` | Arduino | LGPL |
+| `libraries/ArduinoJson/` | Benoit Blanchon | MIT |
+| `libraries/Adafruit_BusIO/`, `libraries/CRC32/`, `libraries/json-streaming-parser-master/` | diverse | MIT |
+| `libraries/Adafruit_GFX_Library/` | Adafruit | BSD |
+| `libraries/EPD/`, `libraries/BluetoothSerial/` | Elecrow / Espressif | siehe jeweilige Dateien |
+| `examples/` | Elecrow | siehe Elecrow-Repository |
+| `factory_firmware/main.ino.bin` | Elecrow | Werksfirmware, unverändert gesichert |
+| `material/*.pdf` | Elecrow, Solomon Systech, Espressif | urheberrechtlich geschützt, nur zur Referenz abgelegt |
+
+Die Datenblätter in `material/` liegen hier zur Bequemlichkeit; die Rechte daran
+liegen bei Solomon Systech bzw. Espressif. Bezugsquellen stehen in `README.md`
+unter *Quellen*.

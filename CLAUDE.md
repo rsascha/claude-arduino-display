@@ -30,7 +30,6 @@ verpasst man die Boot-Ausgabe) — Muster siehe Commit-Historie zu `ha_verlauf`.
 | Core | `esp32:esp32@3.3.11` |
 | Board | `esp32:esp32:esp32s3` (ESP32S3 Dev Module) |
 | Port | `/dev/cu.usbserial-210` (CH340) |
-| MAC | `1c:db:d4:54:e1:c8` |
 
 Sketchbook-Pfad von Arduino IDE **und** arduino-cli zeigt auf dieses Verzeichnis.
 Die IDE hat eine **eigene** Config unter `~/.arduinoIDE/arduino-cli.yaml` — Änderungen
@@ -182,11 +181,22 @@ Makefile
 
 Fotos vom iPhone kommen als HEIC — auf GitHub nicht anzeigbar und als JPEG in voller
 Auflösung sogar größer als das Original. Committet wird deshalb eine verkleinerte JPEG,
-das HEIC bleibt lokal:
+das HEIC bleibt lokal.
+
+**`-strip` ist nicht optional.** iPhone-Fotos tragen GPS-Koordinaten mit ±5 m Genauigkeit
+plus Zeitstempel im EXIF; ein Foto vom Schreibtisch verrät damit die Wohnadresse. `sips`
+schleppt das beim Umwandeln mit. Deshalb `magick`, das HEIC direkt liest und in einem
+Schritt verkleinert und säubert:
 
 ```bash
-sips -s format jpeg -s formatOptions 85 -Z 2000 material/FOTO.HEIC --out material/FOTO_2000px.jpg
+magick material/FOTO.HEIC -strip -resize 2000x2000 -quality 85 material/FOTO_2000px.jpg
+
+# Gegenprobe: leere Ausgabe plus "unknown image property" = sauber
+magick identify -format '%[EXIF:GPSLatitude]\n' material/FOTO_2000px.jpg
 ```
+
+Vor dem Commit prüfen — ist ein Foto mit Koordinaten erst einmal in der Historie, hilft
+nur noch Umschreiben.
 
 ## Geheimnisse
 

@@ -104,6 +104,7 @@ examples/         Offizielle Elecrow-Beispiele + Demos
 factory_firmware/ Werksfirmware als Backup
 material/         Handbuch + Datenblätter (PDF), Fotos des laufenden Panels
 Makefile          Build-/Flash-Targets
+LICENSE           MIT für den eigenen Code, plus Herkunft des Fremdmaterials
 ```
 
 Ein Sketch-Ordner und die `.ino` darin müssen **gleich heißen**
@@ -186,3 +187,15 @@ Stolperfallen:
   Ein `°` (176) ergäbe Index 144 und läse über das Array hinaus — Umlaute ebenso.
   Statt `°C` also `C` schreiben oder den Kreis selbst zeichnen.
 - Zeichenbreite ist `size/2` — Text selbst auf Überlauf prüfen, es wird nicht umgebrochen.
+
+## Lizenz
+
+Der eigene Code und die Dokumentation stehen unter MIT (siehe `LICENSE`).
+
+`libraries/`, `examples/`, `factory_firmware/` und die PDFs in `material/` sind
+Fremdmaterial und behalten die Lizenz ihrer jeweiligen Rechteinhaber — darunter
+GPL-3.0 (GxEPD2) und AGPL-3.0 (EPaperDrive). Die Aufstellung steht in `LICENSE`.
+
+Fotos in `material/` werden **ohne EXIF** committet. iPhone-Aufnahmen tragen sonst
+GPS-Koordinaten mit ±5 m Genauigkeit; der Umwandlungsbefehl in `CLAUDE.md` entfernt
+sie mit `-strip`.
