@@ -37,6 +37,13 @@ material-txt:
 SIM_DIR := tools/simulator
 SIM_OUT ?= $(SIM_DIR)/out.png
 
+# Alle .cpp des Sketches ausser denen, die der Simulator selbst ersetzt:
+# EPD_Init.cpp und spi.cpp lassen echte Pins wackeln, EPD.cpp zeichnet nur —
+# das ist die Datei, auf die es ankommt. Sketches mit eigenen .cpp (ha_wechsel
+# teilt sich auf mehrere auf) werden so ohne weiteres Zutun mituebersetzt.
+SIM_SRCS = $(filter-out $(SKETCH)/EPD_Init.cpp $(SKETCH)/spi.cpp, \
+                        $(wildcard $(SKETCH)/*.cpp))
+
 sim-fetch:
 	$(SIM_DIR)/fetch.sh $(SKETCH)
 
@@ -44,7 +51,7 @@ sim:
 	@c++ -std=c++17 -O1 -w \
 	    -I $(SIM_DIR)/arduino -I $(SKETCH) \
 	    -DSKETCH_PATH='"$(abspath $(SKETCH))/$(notdir $(SKETCH)).ino"' \
-	    $(SIM_DIR)/sim_main.cpp $(SKETCH)/EPD.cpp \
+	    $(SIM_DIR)/sim_main.cpp $(SIM_SRCS) \
 	    -o $(SIM_DIR)/sim
 	@$(SIM_DIR)/sim $(SIM_DIR)/data > $(SIM_DIR)/out.pbm
 	@magick $(SIM_DIR)/out.pbm $(SIM_OUT) && rm -f $(SIM_DIR)/out.pbm

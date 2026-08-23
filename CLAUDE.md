@@ -199,6 +199,7 @@ Faustregel: MCP zum Stöbern, `curl` zum Verifizieren dessen, was der ESP32 sieh
 | `ha_raeume` | sechs Räume plus Außen in einem Diagramm, Beschriftung am Kurvenende |
 | `ha_kacheln` | alle Räume plus Außen als Kacheln, nach Temperatur sortiert, mit Trend |
 | `ha_wetter` | Wind (Kompassrose), Luftdruck mit Tendenz, Wetter-Icon — vier Spalten |
+| `ha_wechsel` | Temperaturen und Wetter im Minutenwechsel; EXIT blättert, MENU lädt neu |
 | `ha_umschalten` | zwei Sensoren im Wechsel; Testsketch für die drei Refresh-Modi |
 | `progress_bar` | Fortschrittsanzeige, EXIT startet neu — Partial-Refresh richtig genutzt |
 
@@ -220,6 +221,7 @@ material/          Handbuch + Datenblätter (PDF + .txt), Fotos (JPEG; *.HEIC is
                    → `*.yaml`: Kommando- und GPIO-Tabellen maschinenlesbar
 PROGRESS_BAR.md    Fortschrittsanzeige und Partial-Refresh — Beispiel `sketches/progress_bar`
 tools/simulator/    Host-Build eines Sketches → PNG (`make sim`), ohne Gerät
+                   → übersetzt alle `.cpp` des Sketch-Ordners (`SIM_SRCS`), nicht nur die `.ino`
 Makefile
 ```
 
@@ -282,11 +284,19 @@ git diff --cached | grep -c 'eyJhbGciOi'          # nur der Platzhalter darf tre
 
 ## Stand
 
-Auf dem Board läuft `sketches/ha_wetter`, Aktualisierung alle 10 Minuten
-(jeder sechste Durchgang mit Vollrefresh). Zurück zu den Temperaturkacheln:
-`make flash SKETCH=sketches/ha_kacheln`.
+Auf dem Board läuft `sketches/ha_wechsel`: Temperaturen und Wetter im
+Minutenwechsel, Daten alle 10 Minuten, Vollrefresh stündlich. Einzeln flashen
+lassen sich weiterhin `sketches/ha_kacheln` und `sketches/ha_wetter`.
 
-`sketches/ha_wetter` ist noch nicht committet.
+Alles committet, Arbeitsverzeichnis sauber.
+
+**Offen:** Im Log der ersten Minute nach dem Flashen standen drei
+`EXIT: umgeblaettert`, ohne dass sicher ist, ob jemand gedrückt hat. Falls nicht,
+flattert der Eingang: Die Taster liegen gegen Masse und werden mit
+`pinMode(pin, INPUT)` gelesen — ohne Pull-up ist der Pin offen, solange niemand
+drückt. Abhilfe wäre `INPUT_PULLUP`; an der Logik ändert das nichts, gedrückt
+bleibt LOW. In `progress_bar` fiel es nie auf, weil der die Taste selten
+abfragt; `ha_wechsel` liest 50-mal pro Sekunde.
 
 Remote ist `git@github.com:rsascha/claude-arduino-display.git` und **privat — das bleibt
 so.** Grund ist nicht der eigene Inhalt, sondern das mitgeführte Fremdmaterial: die

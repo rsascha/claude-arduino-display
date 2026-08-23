@@ -147,6 +147,7 @@ Eigene Sketches in `sketches/`. Kompilieren und flashen mit
 | [`ha_raeume`](sketches/ha_raeume) | sechs Räume plus Außen in einem Diagramm | ja |
 | [`ha_kacheln`](sketches/ha_kacheln) | alle Räume plus Außen als Kacheln, sortiert nach Temperatur | ja |
 | [`ha_wetter`](sketches/ha_wetter) | Wind, Luftdruck und Wetterlage in vier Spalten | ja |
+| [`ha_wechsel`](sketches/ha_wechsel) | Temperaturen und Wetter im Wechsel, EXIT und MENU bedienbar | ja |
 | [`ha_umschalten`](sketches/ha_umschalten) | zwei Sensoren im Wechsel; Testsketch für die Refresh-Modi | ja |
 | [`progress_bar`](sketches/progress_bar) | Fortschrittsanzeige, EXIT startet neu — Partial-Refresh | – |
 
@@ -275,6 +276,35 @@ steht, wird zur Wolke mit dem Rohzustand als Text — besser ein unbekanntes Wor
 falsches Bild. Getestet sind alle sechs Bilder, indem dem Simulator nacheinander jeder
 Zustand untergeschoben wurde; auf Schnee oder Mond hätte man sonst bis zum Winter oder bis
 zur Nacht warten müssen.
+
+**`ha_wechsel`** — die beiden vorigen Sketches in einem: alle 60 Sekunden wechselt das
+Bild zwischen den Temperaturkacheln und der Wetterseite. **EXIT** (GPIO 1) blättert sofort
+um und startet die Minute von vorn, damit die aufgerufene Seite in Ruhe lesbar bleibt.
+**MENU** (GPIO 2) holt die Daten neu und zeichnet die aktuelle Seite frisch.
+
+*Daten getrennt vom Bildwechsel.* Geholt wird alle zehn Minuten, gezeichnet aus dem
+Zwischenspeicher. Andernfalls liefe jede Minute eine Runde von elf HTTP-Anfragen, und beim
+Umblättern sähe man die Netzwerklatenz statt das Panel — dieselbe Trennung wie in
+`ha_umschalten`. Läuft der Zehn-Minuten-Abruf ab, wird **nicht** neu gezeichnet: der
+nächste Wechsel steht ohnehin binnen einer Minute an und bringt die frischen Zahlen mit.
+Ein zusätzlicher Bildaufbau wäre ein Refresh-Zyklus für nichts.
+
+*Aufgeteilt auf mehrere Dateien.* `draw.cpp` hält die Zeichenhilfen, `screen_temperaturen.cpp`
+und `screen_wetter.cpp` je eine Seite, die `.ino` nur Daten, Tasten und Taktung. In einer
+einzigen `.ino` wären es rund 900 Zeilen mit der Hälfte doppelt — beide Seiten brauchen
+dieselben Primitive, weil `EPD.h` nur Linie, Rechteck und Kreis kennt. Der Simulator
+übersetzt seitdem alle `.cpp` des Sketch-Ordners (siehe `SIM_SRCS` im `Makefile`) statt nur
+`EPD.cpp`.
+
+*Fußzeile mit Platzprüfung.* Der Tastenhinweis sitzt mittig in der tatsächlich freien Lücke
+zwischen Zeitstempel und rechtem Text, nicht auf der Bildmitte: die rechten Texte sind je
+Seite verschieden lang, und auf der Temperaturseite stand sonst
+„EXIT blaetPfeil und Zahl:" übereinander. Passt der Hinweis nicht, entfällt er ganz.
+
+*Ein Wechsel pro Minute sind 1.440 Bildwechsel am Tag.* Deshalb Fast-Update als Regelfall
+und nur jeder 60. Aufbau — also stündlich — mit Löschzyklus. Bei jedem Wechsel voll zu
+refreshen hieße sechzigmal pro Stunde mehrfaches Schwarzblitzen; das fällt mehr auf als
+das Ghosting, das es verhindert.
 
 **`ha_umschalten`** — Testsketch. Blendet im 5-Sekunden-Takt zwischen Wohnzimmer- und
 Schlafzimmerkurve um und wechselt dabei reihum Voll-, Fast- und Partial-Refresh durch;
