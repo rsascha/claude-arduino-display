@@ -210,6 +210,9 @@ git diff --cached | grep -c 'eyJhbGciOi'          # nur der Platzhalter darf tre
   287 Punkte, min 21.3 und max 27.7 wie Pythons `json`-Modul auf derselben Antwort.
 - **Layout am realen Gerät kontrollieren.** Ein Foto des Panels hat eine 6-px-Überlappung
   gezeigt, die im SVG-Prototyp unsichtbar war, weil dort andere Schriftmetriken galten.
+- **Nie ungefragt committen.** Änderungen fertigstellen, dann fragen — Sascha schaut sich
+  das Diff vorher an. Gilt auch, wenn die Änderung offensichtlich richtig ist und wenn
+  vorher schon einmal committet werden durfte; die Erlaubnis gilt nur für den einen Commit.
 - **Vor jedem Commit auf Geheimnisse prüfen** (siehe Abschnitt *Geheimnisse*).
 
 ## Stand
