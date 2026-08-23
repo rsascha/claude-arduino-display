@@ -5,7 +5,7 @@ PORT  ?= $(shell arduino-cli board list | awk '/usbserial|usbmodem/ {print $$1; 
 SKETCH ?= sketches/hello_epaper
 LIBS  := ./libraries
 
-.PHONY: build upload flash monitor port clean
+.PHONY: build upload flash monitor port clean material-txt
 
 build:
 	arduino-cli compile --fqbn "$(FQBN)" --libraries $(LIBS) $(SKETCH)
@@ -24,3 +24,8 @@ port:
 
 clean:
 	rm -rf $(SKETCH)/build
+
+# Textversionen der PDFs in material/ — greppbar, mit Seitenmarken.
+# Braucht poppler: brew install poppler
+material-txt:
+	python3 material/pdf2txt.py

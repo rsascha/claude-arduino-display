@@ -1,0 +1,145 @@
+# GPIO-Belegung des CrowPanel ESP32 5.79" — maschinenlesbare Fassung von
+# material/CLAUDE.md §4.
+#
+# Die Datenblaetter kennen nur das Modul, nicht das Board. Alle Zuordnungen
+# stammen deshalb aus dem Elecrow-Beispielcode; wo sie am Geraet nachgeprueft
+# sind, steht das ausdruecklich dabei.
+#
+# `belegt_durch`:
+#   geprueft   = am Geraet betaetigt/gemessen, Datum in `geprueft_am`
+#   code       = aus dem Elecrow-Beispielcode abgelesen
+#   datenblatt = ESP32-S3-WROOM-1 Datenblatt
+
+board: 'Elecrow CrowPanel ESP32 5.79" E-Paper HMI'
+modul: ESP32-S3-WROOM-1-N8R8
+handbuch: material/crowpanel-5.79-benutzerhandbuch.pdf
+
+# Ausrichtung, auf die sich alle Positionsangaben unten beziehen.
+ausrichtung:
+  beschreibung: Querformat, Blick auf das Display, USB-Anschluss oben, Bedienelemente an der linken Kante
+  display_rotation: 0
+  achtung: >-
+    EPD.h liefert `#define Rotation 180` — damit steht das Bild bei dieser
+    Ausrichtung auf dem Kopf. Sketches uebergeben stattdessen 0 an Paint_NewImage().
+    Die Abbildung im Handbuch (S. 2) zeigt die Rueckseite mit USB-C unten, dort ist
+    die Reihenfolge der Bedienelemente daher umgekehrt.
+
+bedienelemente:
+  - position: oben
+    element: EXIT
+    gpio: 1
+    define: EXIT_KEY
+    belegt_durch: geprueft
+    geprueft_am: 2026-08-23
+  - position: mitte
+    element: Drehschalter, Rad nach oben
+    gpio: 4
+    define: NEXT_KEY
+    belegt_durch: geprueft
+    geprueft_am: 2026-08-23
+  - position: mitte
+    element: Drehschalter, Rad druecken
+    gpio: 5
+    define: OK_KEY
+    belegt_durch: geprueft
+    geprueft_am: 2026-08-23
+  - position: mitte
+    element: Drehschalter, Rad nach unten
+    gpio: 6
+    define: PRV_KEY
+    belegt_durch: geprueft
+    geprueft_am: 2026-08-23
+  - position: unten
+    element: MENU
+    gpio: 2
+    define: HOME_KEY
+    belegt_durch: geprueft
+    geprueft_am: 2026-08-23
+
+taster:
+  pinmode: INPUT
+  gegen: Masse
+  gedrueckt: LOW
+  offen: >-
+    Ob der Drehschalter ein Quadratur-Encoder ist oder drei getrennte Kontakte,
+    ist weiterhin unklar — die GPIOs sind geprueft, die Bauart dahinter nicht.
+
+# Fest verdrahtet auf der Platine, nicht programmierbar.
+platinentaster:
+  - element: BOOT
+    gpio: 0
+    wirkung: haelt GPIO 0 auf LOW -> Flash-Modus
+    belegt_durch: code
+  - element: RESET
+    gpio: null
+    wirkung: zieht EN auf LOW -> Neustart
+    belegt_durch: code
+
+epaper:
+  mosi: 11
+  sck: 12
+  cs: 45
+  dc: 46
+  res: 47
+  busy: 48
+  belegt_durch: code
+  quelle: examples/5.79_Global_refresh/spi.h:7-12
+  achtung: >-
+    CS (45) und DC (46) sind Strapping-Pins (WROOM-1 Datenblatt S. 13, §3.3).
+    Im Betrieb unkritisch, aber externe Beschaltung, die beim Einschalten zieht,
+    aendert den Boot-Modus.
+
+stromversorgung:
+  - gpio: 7
+    funktion: Display-Spannung, muss in setup() auf HIGH
+    belegt_durch: code
+    achtung: Fehlt digitalWrite(7, HIGH), bleibt das Display dunkel — unabhaengig vom restlichen Code.
+  - gpio: 42
+    funktion: zweite Versorgungsfreigabe, noetig fuer die TF-Karte
+    belegt_durch: code
+    quelle: examples/5.79_TF/5.79_TF.ino:26
+  - gpio: 41
+    funktion: Power-LED
+    belegt_durch: code
+    quelle: examples/5.79_PWR/5.79_PWR.ino:22
+
+tf_karte:
+  cs: 10
+  miso: 13
+  sck: 39
+  mosi: 40
+  belegt_durch: code
+  quelle: examples/5.79_TF/5.79_TF.ino:6-9
+
+uart:
+  tx: 43
+  rx: 44
+  chip: CH340
+  baud_monitor: 115200
+  baud_upload: 460800
+  belegt_durch: datenblatt
+  achtung: >-
+    Upload mit 921600 (Core-Default) bricht an diesem CH340 mit
+    "Unable to verify flash chip connection" ab, nachdem der Stub-Flasher schon lief.
+
+# Die einzigen frei verfuegbaren Pins.
+gpio_header:
+  pins: [3, 8, 9, 14, 15, 16, 17, 18, 19, 20, 21, 38]
+  belegt_durch: code
+  quelle: examples/5.79_GPIO/5.79_GPIO.ino:49
+  hinweis: >-
+    GPIO 3 ist Strapping-Pin (JTAG-Signalquelle). GPIO 19/20 sind am Modul
+    USB D-/D+, hier aber am Header — die USB-Buchse haengt am CH340, nicht am
+    nativen USB des ESP32.
+
+gesperrt:
+  pins: [35, 36, 37]
+  grund: Octal-SPI-PSRAM
+  belegt_durch: datenblatt
+  quelle: ESP32-S3-WROOM-1 Datenblatt S. 12, Fussnote b zu Tabelle 3
+  folge: In den Board-Einstellungen muss PSRAM=opi stehen.
+
+nicht_vorhanden:
+  pins_von: 22
+  pins_bis: 34
+  hinweis: Das Modul fuehrt 41 Pins heraus; GPIO 22-34 gibt es nicht.

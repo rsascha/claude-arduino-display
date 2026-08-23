@@ -174,8 +174,10 @@ sketches/          Eigene Sketches (secrets.h darin ist gitignored)
 libraries/         Elecrow-Library-Bundle (zugleich Sketchbook-libraries/)
 examples/          Offizielle Elecrow-Beispiele + Demos — Vorlagen zum Kopieren
 factory_firmware/  Werksfirmware als Backup
-material/          Handbuch + Datenblätter (PDF), Fotos (JPEG; *.HEIC ist gitignored)
+material/          Handbuch + Datenblätter (PDF + .txt), Fotos (JPEG; *.HEIC ist gitignored)
                    → `material/CLAUDE.md` fasst die Datenblätter mit Seitenangaben zusammen
+                   → `.txt` je PDF zum Durchsuchen, `make material-txt` erzeugt sie neu
+                   → `*.yaml`: Kommando- und GPIO-Tabellen maschinenlesbar
 Makefile
 ```
 

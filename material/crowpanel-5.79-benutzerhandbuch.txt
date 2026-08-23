@@ -1,0 +1,91 @@
+=== Seite 1 ===
+         CrowPanel ESP32 5,79 Zoll E-Paper HMI Display
+
+
+                               Benutzerhandbuch
+
+
+
+
+Ⅰ.Vorteile von E-Paper
+E-Paper-Displays können Bilder/Texte bei Beleuchtung oder Tageslicht klar
+
+darstellen, benötigen keine Hintergrundbeleuchtung und verbrauchen durch
+
+Teilaktualisierung weniger Energie bei längerer Lebensdauer. Da ihr Effekt dem von
+
+Papier ähnelt, werden sie häufig als E-Reader eingesetzt.
+
+
+
+
+                                                                                 1
+
+=== Seite 2 ===
+Ⅱ.Produktabmessungen und Schnittstellendarstellung:
+
+
+
+
+                                                      2
+
+=== Seite 3 ===
+Ⅲ.Spezifikation
+
+
+
+
+Ⅳ.Produktumfang:
+1x 5,79-Zoll E-Paper-Display
+
+1x USB-Kabel
+
+1x Benutzerhandbuch
+                               3
+
+=== Seite 4 ===
+Ⅴ.Weitere Informationen zu diesem E-Paper-Display:
+1. Wiki des ESP32 5,79-Zoll E-Paper-Displays
+
+
+
+
+2. SSD1683 Datenblatt
+
+
+
+
+                                                     4
+
+=== Seite 5 ===
+3.Um das Datenblatt des ESP32-S3-WROOM-1 herunterzuladen, scannen Sie bitte
+
+den untenstehenden QR-Code.
+
+
+
+
+4.Um die 3D-Datei des ESP32 5,79-Zoll E-Paper-Displays zu erhalten, kontaktieren
+
+Sie uns bitte per E-Mail unter der After-Sales-Adresse info@elecrow.com.
+
+
+
+
+Informationen zur Entsorgung von Elektro- und Elektronik-Altgeräten (WEEE).
+Dieses Symbol auf den Produkten und den beiliegenden Dokumenten bedeutet, dass gebrauchte
+elektrische und elektronische Geräte nicht mit dem allgemeinen Haushaltsabfall vermischt werden
+dürfen. Zur ordnungsgemäßen Entsorgung, Behandlung, Rückgewinnung und Wiederverwertung
+bringen Sie diese Produkte bitte zu den dafür vorgesehenen Sammelstellen, wo sie kostenlos
+angenommen werden. In einigen Ländern können Sie die Geräte auch bei Ihrem örtlichen Händler
+abgeben, wenn Sie ein neues Produkt kaufen.
+
+Durch die korrekte Entsorgung dieses Produkts helfen Sie, wertvolle Ressourcen zu schonen und
+mögliche negative Auswirkungen auf die menschliche Gesundheit und die Umwelt zu vermeiden,
+die durch unsachgemäße Abfallbehandlung entstehen könnten. Weitere Informationen zur
+nächstgelegenen Sammelstelle für Elektro- und Elektronik-Altgeräte erhalten Sie bei Ihrer lokalen
+Behörde.
+
+
+                                                                                                5
+

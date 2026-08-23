@@ -1,0 +1,175 @@
+# SSD1683 — die Kommandos, die der Elecrow-Treiber tatsächlich benutzt.
+#
+# Maschinenlesbare Fassung der Tabellen aus material/CLAUDE.md §2; Prosa und
+# Begründungen stehen dort, hier nur die nachschlagbaren Werte.
+#
+# `seite` verweist auf material/ssd1683-datasheet.pdf bzw. dessen Textversion
+# (dort als `=== Seite N ===` markiert, siehe pdf2txt.py).
+#
+# Hex-Werte sind ungequotet, YAML liest sie als Integer: 0x24 -> 36.
+# `belegt_durch` unterscheidet dokumentierte von erschlossenen Angaben:
+#   datenblatt  = steht so im PDF
+#   treibercode = aus examples/5.79_Global_refresh/ abgelesen
+#   ruecksatz   = aus dem Bitmuster zurueckgerechnet, nirgends dokumentiert
+
+quelle:
+  datenblatt: material/ssd1683-datasheet.pdf
+  revision: "Rev 1.0, Januar 2021, Solomon Systech"
+  treiber: examples/5.79_Global_refresh/
+
+# Zwei kaskadierte Chips an EINER CS-Leitung; unterschieden wird am Kommando-Byte.
+kaskade:
+  slave_offset: 0x80
+  belegt_durch: treibercode
+  hinweis: >-
+    Das Datenblatt beschreibt nur einen einzelnen Chip. Cascade Mode steht auf
+    Seite 21 (§6.12), eine Registerverschiebung wird nirgends erwaehnt — die
+    +0x80-Regel ist aus EPD_Init.cpp abgelesen und im Betrieb bestaetigt.
+  register:
+    - zweck: RAM X-Adressbereich
+      master: 0x44
+      slave: 0xC4
+      code: "EPD_Init.cpp:286,326"
+    - zweck: RAM Y-Adressbereich
+      master: 0x45
+      slave: 0xC5
+      code: "EPD_Init.cpp:290,330"
+    - zweck: RAM-Adresszaehler X
+      master: 0x4E
+      slave: 0xCE
+      code: "EPD_Init.cpp:296,336"
+    - zweck: RAM-Adresszaehler Y
+      master: 0x4F
+      slave: 0xCF
+      code: "EPD_Init.cpp:298,338"
+    - zweck: RAM schreiben S/W
+      master: 0x24
+      slave: 0xA4
+      code: "EPD_Init.cpp:195-236"
+    - zweck: RAM schreiben Rot
+      master: 0x26
+      slave: 0xA6
+      code: "EPD_Init.cpp:195-236"
+
+kommandos:
+  - hex: 0x10
+    name: Deep Sleep mode
+    seite: 25
+    belegt_durch: datenblatt
+    treiber: EPD_DeepSleep()
+    parameter: "0x01 = Mode 1, 0x03 = Mode 2"
+    achtung: >-
+      BUSY bleibt im Deep Sleep dauerhaft HIGH. Ohne EPD_HW_RESET() danach haengt
+      EPD_READBUSY() in einer while(1)-Schleife ohne Timeout (EPD_Init.cpp:11).
+
+  - hex: 0x11
+    name: Data Entry mode setting
+    seite: 25
+    belegt_durch: datenblatt
+    parameter: "0x05 = Y dekrementiert, X inkrementiert"
+
+  - hex: 0x12
+    name: SW RESET
+    seite: 25
+    belegt_durch: datenblatt
+    treiber: EPD_Init()
+    hinweis: nach dem Hardware-Reset
+
+  - hex: 0x18
+    name: Temperature Sensor Control
+    seite: 27
+    belegt_durch: datenblatt
+    parameter: "0x80 = interner Sensor"
+
+  - hex: 0x1A
+    name: Write to temperature register
+    seite: 27
+    belegt_durch: datenblatt
+    parameter: "0x64, 0x00"
+
+  - hex: 0x20
+    name: Master Activation
+    seite: 28
+    belegt_durch: datenblatt
+    hinweis: loest die mit 0x22 gewaehlte Sequenz aus
+
+  - hex: 0x22
+    name: Display Update Control 2
+    seite: 29
+    belegt_durch: datenblatt
+    hinweis: waehlt die Sequenz, siehe update_modi
+
+  - hex: 0x24
+    name: Write RAM (Black White)
+    seite: 29
+    belegt_durch: datenblatt
+    parameter: "Bit 1 = weiss, Bit 0 = schwarz"
+
+  - hex: 0x26
+    name: Write RAM (RED)
+    seite: 30
+    belegt_durch: datenblatt
+    hinweis: beim S/W-Panel nur zum Loeschen beschrieben
+
+  - hex: 0x3C
+    name: Border Waveform Control
+    seite: 34
+    belegt_durch: datenblatt
+    parameter: "0x03"
+
+  - hex: 0x44
+    name: Set RAM X-address start/end
+    seite: 34
+    belegt_durch: datenblatt
+
+  - hex: 0x45
+    name: Set RAM Y-address start/end
+    seite: 35
+    belegt_durch: datenblatt
+
+  - hex: 0x4E
+    name: Set RAM X address counter
+    seite: 36
+    belegt_durch: datenblatt
+
+  - hex: 0x4F
+    name: Set RAM Y address counter
+    seite: 36
+    belegt_durch: datenblatt
+
+# Parameter fuer 0x22; gestartet wird die Sequenz danach mit 0x20.
+update_modi:
+  - wert: 0xF7
+    treiber: EPD_Update()
+    seite: 29
+    belegt_durch: datenblatt
+    bedeutung: Takt + Analog an, Temperatur laden, LUT laden (3-Farb-Modus), anzeigen
+  - wert: 0xC7
+    treiber: EPD_FastUpdate()
+    seite: 29
+    belegt_durch: datenblatt
+    bedeutung: Takt + Analog an, anzeigen (3-Farb-Modus), ohne Temperatur/LUT
+  - wert: 0xDC
+    treiber: EPD_PartUpdate()
+    seite: 29
+    belegt_durch: ruecksatz
+    bedeutung: Takt an, Analog an, anzeigen, Analog aus — ohne LUT-Nachladen
+    achtung: >-
+      Steht in keiner Zeile der Tabelle auf Seite 29. Die Bedeutung ist aus dem
+      Bitmuster zurueckgerechnet und passt zum Teilrefresh, ist aber nicht
+      dokumentiert.
+
+# Der Treiber nutzt durchgehend die 3-Farb-Varianten, obwohl das Panel S/W ist.
+# Fuer S/W waeren 0xFF und 0xCF vorgesehen; es laeuft trotzdem, vermutlich weil
+# die Waveforms im OTP des Panels entsprechend abgelegt sind.
+
+puffergeometrie:
+  source_bytes_pro_chip: 50      # 400 Sources / 8
+  gate_bits: 272                 # genutzte Gates von 300 moeglichen
+  allscreen_bytes_pro_chip: 13600
+  puffer_gesamt: 27200
+  breite_logisch: 800            # EPD_W
+  breite_sichtbar: 792
+  naht_pixel: 8
+  hinweis: >-
+    Paint_SetPixel() ueberspringt die Naht selbst mit `if (Xpoint >= 396) Xpoint += 8`.

@@ -8,7 +8,34 @@ ist, steht das ausdrücklich dabei.
 |---|---|
 | `crowpanel-5.79-benutzerhandbuch.pdf` | 5 S., Elecrow, deutsch — Board, Bedienelemente, Spezifikation |
 | `ssd1683-datasheet.pdf` | 49 S., Solomon Systech Rev 1.0 (Jan 2021) — Display-Controller |
-| `esp32-s3-wroom-1-datasheet.pdf` | Espressif v1.2 (2023) — Funkmodul |
+| `esp32-s3-wroom-1-datasheet.pdf` | 37 S., Espressif v1.2 (2023) — Funkmodul |
+
+### Textversionen — zum Durchsuchen
+
+Neben jedem PDF liegt eine `.txt` gleichen Namens, erzeugt mit `make material-txt`
+(`pdftotext -layout`, Skript: `pdf2txt.py`). Sie ersetzen die PDFs nicht, machen sie
+aber greppbar. Jede Seite beginnt mit einer Marke `=== Seite N ===`, sodass sich eine
+Fundstelle mit derselben Seitenangabe zitieren lässt wie aus dem PDF:
+
+```bash
+grep -n "Deep Sleep" material/ssd1683-datasheet.txt
+awk '/^=== Seite /{s=$3} /Deep Sleep mode/{print s; exit}' material/ssd1683-datasheet.txt
+```
+
+`-layout` ist dabei nicht optional: ohne die Option zerfallen die Registertabellen
+des SSD1683 in unlesbare Wortfolgen.
+
+### Strukturierte Fassungen
+
+| Datei | Inhalt |
+|---|---|
+| `ssd1683-kommandos.yaml` | Kommandos, Master/Slave-Register, Update-Modi, Puffergeometrie |
+| `board-gpio.yaml` | GPIO-Belegung des Boards inkl. Bedienelementen |
+
+Beide tragen pro Eintrag ein Feld `belegt_durch`, das dokumentierte von erschlossenen
+Angaben trennt (`datenblatt`, `treibercode`, `code`, `geprueft`, `ruecksatz`). Inhaltlich
+sind sie ein Auszug der Tabellen weiter unten — die Prosa und die Begründungen stehen
+hier, nicht in den YAML-Dateien.
 
 ---
 
