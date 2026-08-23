@@ -19,7 +19,13 @@ HOST=$(val HA_HOST); TOKEN=$(val HA_TOKEN)
 PORT=$(grep '^#define HA_PORT' "$SECRETS" | awk '{print $3}')
 
 # entity_ids aus dem Sketch ziehen — keine zweite Liste, die veralten kann.
-ENTITIES=$(grep -o '"sensor\.[a-z0-9_]*"' "$SKETCH"/*.ino | sed 's/.*"\(.*\)"/\1/' | sort -u)
+# Auch weather.*: ha_wetter liest den Zustand von weather.forecast_home.
+#
+# #include-Zeilen muessen vorher raus: '#include "weather.h"' sieht fuer das
+# Muster aus wie die entity_id 'weather.h', und HA antwortet darauf mit 404 —
+# was wie ein kaputter Sensor aussieht, aber ein Dateiname ist.
+ENTITIES=$(cat "$SKETCH"/*.ino | grep -v '^#include' \
+           | grep -oE '"(sensor|weather)\.[a-z0-9_]+"' | sed 's/.*"\(.*\)"/\1/' | sort -u)
 [ -n "$ENTITIES" ] || { echo "Keine entity_ids in $SKETCH gefunden"; exit 1; }
 
 mkdir -p "$DIR"

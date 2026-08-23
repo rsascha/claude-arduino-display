@@ -146,6 +146,7 @@ Eigene Sketches in `sketches/`. Kompilieren und flashen mit
 | [`ha_verlauf`](sketches/ha_verlauf) | Temperaturkurve über 10 Tage mit Gitter und Achsen | ja |
 | [`ha_raeume`](sketches/ha_raeume) | sechs Räume plus Außen in einem Diagramm | ja |
 | [`ha_kacheln`](sketches/ha_kacheln) | alle Räume plus Außen als Kacheln, sortiert nach Temperatur | ja |
+| [`ha_wetter`](sketches/ha_wetter) | Wind, Luftdruck und Wetterlage in vier Spalten | ja |
 | [`ha_umschalten`](sketches/ha_umschalten) | zwei Sensoren im Wechsel; Testsketch für die Refresh-Modi | ja |
 | [`progress_bar`](sketches/progress_bar) | Fortschrittsanzeige, EXIT startet neu — Partial-Refresh | – |
 
@@ -244,6 +245,36 @@ das noch anders und fährt bei jeder Aktualisierung den vollen Zyklus.
 
 Fällt ein Sensor aus, zeigt seine Kachel `n/a` und rutscht ans Ende der Sortierung; ein
 Fehlerbild gibt es nur, wenn alle sechs ausfallen.
+
+**`ha_wetter`** — vier Spalten: Kompassrose mit Pfeil, Windgeschwindigkeit, Luftdruck mit
+der Änderung der letzten drei Stunden, Wetter-Icon. Der Sketch, an dem am meisten selbst
+gezeichnet wird — `EPD.h` kennt Linie, Rechteck und Kreis, sonst nichts.
+
+*Der Pfeil zeigt, woher der Wind kommt.* Home Assistant liefert die Windrichtung nach
+meteorologischer Konvention als Herkunft: 341° heißt „aus NNW". Ein kartenüblicher Pfeil in
+Wehrichtung zeigte damit nach SSO, während daneben „NNW" steht — Bild und Text sähen aus,
+als widersprächen sie sich. Deshalb zeigt der Pfeil auf die NNW-Marke der Rose, und Rose,
+Pfeil und Text sagen dasselbe.
+
+*Luftdruck vom Solarnode, nicht aus der Vorhersage.* Beide Quellen sind da und 16 hPa
+auseinander: `weather.forecast_home` meldet 1024 hPa auf Meereshöhe reduziert, der
+Solarnode misst 1008 hPa vor Ort. Für die Aussage ist das ohne Belang — beim Luftdruck
+zählt die Tendenz, und eine Differenz ist höhenunabhängig. Die drei Stunden sind nicht
+willkürlich, sondern der meteorologische Standardzeitraum für die Drucktendenz.
+
+*Icons als Umriss über den Umweg Weiß.* Eine flächig schwarze Wolke wäre auf E-Paper ein
+Klecks. Ein Umriss aus einzelnen Bögen scheitert daran, dass sich die Bögen der drei
+Wolkenbäuche gegenseitig durchschneiden. Der Ausweg: die ganze Form zweimal zeichnen —
+erst 2 px größer in Schwarz, dann in Weiß darüber. Übrig bleibt ein sauberer Umriss, und
+weil die weiße Füllung alles darunter löscht, verdeckt die Wolke beim Icon *heiter*
+automatisch die Sonnenstrahlen hinter ihr.
+
+*Fünf Icons plus Mond.* Home Assistant kennt 15 Wetterzustände. Mit nur Sonne und Regen
+wären `cloudy` und `fog` als Sonnentag durchgegangen. Was nicht in der Zuordnungstabelle
+steht, wird zur Wolke mit dem Rohzustand als Text — besser ein unbekanntes Wort als ein
+falsches Bild. Getestet sind alle sechs Bilder, indem dem Simulator nacheinander jeder
+Zustand untergeschoben wurde; auf Schnee oder Mond hätte man sonst bis zum Winter oder bis
+zur Nacht warten müssen.
 
 **`ha_umschalten`** — Testsketch. Blendet im 5-Sekunden-Takt zwischen Wohnzimmer- und
 Schlafzimmerkurve um und wechselt dabei reihum Voll-, Fast- und Partial-Refresh durch;

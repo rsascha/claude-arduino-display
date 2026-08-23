@@ -198,6 +198,7 @@ Faustregel: MCP zum Stöbern, `curl` zum Verifizieren dessen, was der ESP32 sieh
 | `ha_verlauf` | Temperaturkurve über 10 Tage mit Gitter und Achsen |
 | `ha_raeume` | sechs Räume plus Außen in einem Diagramm, Beschriftung am Kurvenende |
 | `ha_kacheln` | alle Räume plus Außen als Kacheln, nach Temperatur sortiert, mit Trend |
+| `ha_wetter` | Wind (Kompassrose), Luftdruck mit Tendenz, Wetter-Icon — vier Spalten |
 | `ha_umschalten` | zwei Sensoren im Wechsel; Testsketch für die drei Refresh-Modi |
 | `progress_bar` | Fortschrittsanzeige, EXIT startet neu — Partial-Refresh richtig genutzt |
 
@@ -281,11 +282,11 @@ git diff --cached | grep -c 'eyJhbGciOi'          # nur der Platzhalter darf tre
 
 ## Stand
 
-Auf dem Board läuft `sketches/ha_kacheln`, Aktualisierung alle 10 Minuten
-(jeder sechste Durchgang mit Vollrefresh). Zurück zum vorherigen Sketch:
-`make flash SKETCH=sketches/ha_verlauf`.
+Auf dem Board läuft `sketches/ha_wetter`, Aktualisierung alle 10 Minuten
+(jeder sechste Durchgang mit Vollrefresh). Zurück zu den Temperaturkacheln:
+`make flash SKETCH=sketches/ha_kacheln`.
 
-Alles committet, Arbeitsverzeichnis sauber.
+`sketches/ha_wetter` ist noch nicht committet.
 
 Remote ist `git@github.com:rsascha/claude-arduino-display.git` und **privat — das bleibt
 so.** Grund ist nicht der eigene Inhalt, sondern das mitgeführte Fremdmaterial: die
