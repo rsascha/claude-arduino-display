@@ -230,6 +230,13 @@ git diff --cached | grep -c 'eyJhbGciOi'          # nur der Platzhalter darf tre
 Auf dem Board läuft `sketches/ha_verlauf`, Aktualisierung alle 30 Minuten.
 Alles committet, Arbeitsverzeichnis sauber.
 
+Remote ist `git@github.com:rsascha/claude-arduino-display.git` und **privat — das bleibt
+so.** Grund ist nicht der eigene Inhalt, sondern das mitgeführte Fremdmaterial: die
+Datenblätter in `material/` (Solomon Systech, Espressif) und `factory_firmware/main.ino.bin`
+(Elecrow) dürfen nicht weiterverbreitet werden. Soll das Repo je öffentlich werden, müssen
+beide vorher raus und durch Links ersetzt werden; die Bezugsquellen stehen in `README.md`
+unter *Quellen*.
+
 ## Offene Punkte
 
 - Beispiele stammen aus der Core-2.x/3.0-Zeit, gebaut wird mit 3.3.11. `5.79_Global_refresh`
