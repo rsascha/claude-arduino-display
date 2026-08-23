@@ -5,7 +5,7 @@ PORT  ?= $(shell arduino-cli board list | awk '/usbserial|usbmodem/ {print $$1; 
 SKETCH ?= sketches/hello_epaper
 LIBS  := ./libraries
 
-.PHONY: build upload flash monitor port clean material-txt
+.PHONY: build upload flash monitor port clean material-txt sim sim-fetch
 
 build:
 	arduino-cli compile --fqbn "$(FQBN)" --libraries $(LIBS) $(SKETCH)
@@ -29,3 +29,23 @@ clean:
 # Braucht poppler: brew install poppler
 material-txt:
 	python3 material/pdf2txt.py
+
+# --- Simulator ---------------------------------------------------------------
+# Baut den Sketch nativ und schreibt sein Bild als PNG, ohne Geraet. Verwendet
+# den echten Zeichencode (EPD.cpp) und die echten Fonts; nur Arduino, WLAN und
+# HTTP sind ersetzt (tools/simulator/arduino/). Braucht ImageMagick.
+SIM_DIR := tools/simulator
+SIM_OUT ?= $(SIM_DIR)/out.png
+
+sim-fetch:
+	$(SIM_DIR)/fetch.sh $(SKETCH)
+
+sim:
+	@c++ -std=c++17 -O1 -w \
+	    -I $(SIM_DIR)/arduino -I $(SKETCH) \
+	    -DSKETCH_PATH='"$(abspath $(SKETCH))/$(notdir $(SKETCH)).ino"' \
+	    $(SIM_DIR)/sim_main.cpp $(SKETCH)/EPD.cpp \
+	    -o $(SIM_DIR)/sim
+	@$(SIM_DIR)/sim $(SIM_DIR)/data > $(SIM_DIR)/out.pbm
+	@magick $(SIM_DIR)/out.pbm $(SIM_OUT) && rm -f $(SIM_DIR)/out.pbm
+	@echo "-> $(SIM_OUT)"

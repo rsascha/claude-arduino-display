@@ -188,6 +188,7 @@ Faustregel: MCP zum Stöbern, `curl` zum Verifizieren dessen, was der ESP32 sieh
 | `smiley` | eigene Bogen-Funktion, `safePixel()`, Kreise mit Strichstärke |
 | `ha_temperatur` | ein HA-Sensorwert groß auf dem Display |
 | `ha_verlauf` | Temperaturkurve über 10 Tage mit Gitter und Achsen |
+| `ha_raeume` | sechs Räume plus Außen in einem Diagramm, Beschriftung am Kurvenende |
 | `ha_umschalten` | zwei Sensoren im Wechsel; Testsketch für die drei Refresh-Modi |
 | `progress_bar` | Fortschrittsanzeige, EXIT startet neu — Partial-Refresh richtig genutzt |
 
@@ -208,6 +209,7 @@ material/          Handbuch + Datenblätter (PDF + .txt), Fotos (JPEG; *.HEIC is
                    → `.txt` je PDF zum Durchsuchen, `make material-txt` erzeugt sie neu
                    → `*.yaml`: Kommando- und GPIO-Tabellen maschinenlesbar
 PROGRESS_BAR.md    Fortschrittsanzeige und Partial-Refresh — Beispiel `sketches/progress_bar`
+tools/simulator/    Host-Build eines Sketches → PNG (`make sim`), ohne Gerät
 Makefile
 ```
 
@@ -252,6 +254,11 @@ git diff --cached | grep -c 'eyJhbGciOi'          # nur der Platzhalter darf tre
   287 Punkte, min 21.3 und max 27.7 wie Pythons `json`-Modul auf derselben Antwort.
 - **Layout am realen Gerät kontrollieren.** Ein Foto des Panels hat eine 6-px-Überlappung
   gezeigt, die im SVG-Prototyp unsichtbar war, weil dort andere Schriftmetriken galten.
+  Seitdem gibt es `make sim SKETCH=...`: Es übersetzt den Sketch nativ und schreibt sein
+  Bild als PNG — mit dem **echten** `EPD.cpp` und den echten Fonts, ersetzt sind nur
+  Arduino, WLAN und HTTP (`tools/simulator/`). Damit ist der Prototyp pixelgleich, und
+  Layoutfehler fallen ohne Flashen auf. Vorher einmal `make sim-fetch SKETCH=...` für die
+  Daten. Das Gerät bleibt trotzdem die letzte Instanz für Kontrast und Lesbarkeit.
 - **Nie ungefragt committen.** Änderungen fertigstellen, dann fragen — Sascha schaut sich
   das Diff vorher an. Gilt auch, wenn die Änderung offensichtlich richtig ist und wenn
   vorher schon einmal committet werden durfte; die Erlaubnis gilt nur für den einen Commit.

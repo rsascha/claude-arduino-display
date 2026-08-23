@@ -16,3 +16,9 @@ secrets.h
 
 # Foto-Originale: bleiben lokal, committet wird die verkleinerte JPEG
 material/*.HEIC
+
+# Simulator: erzeugte Bilder und gecachte HA-Antworten bleiben lokal
+tools/simulator/out.png
+tools/simulator/out.pbm
+tools/simulator/sim
+tools/simulator/data/

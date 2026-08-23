@@ -112,7 +112,8 @@ examples/         Offizielle Elecrow-Beispiele + Demos
 factory_firmware/ Werksfirmware als Backup
 material/         Handbuch + Datenblätter (PDF und .txt), Fotos des laufenden Panels,
                   Kommando- und GPIO-Tabellen als YAML
-Makefile          Build-/Flash-Targets, dazu `make material-txt`
+tools/simulator/  Host-Build eines Sketches -> PNG, ohne Gerät
+Makefile          Build-/Flash-Targets, dazu `make sim` und `make material-txt`
 PROGRESS_BAR.md   Fortschrittsanzeige und Partial-Refresh im Detail
 LICENSE           MIT für den eigenen Code, plus Herkunft des Fremdmaterials
 ```
@@ -143,6 +144,7 @@ Eigene Sketches in `sketches/`. Kompilieren und flashen mit
 | [`smiley`](sketches/smiley) | eigene Bogen-Funktion, `safePixel()`, Kreise mit Strichstärke | – |
 | [`ha_temperatur`](sketches/ha_temperatur) | ein Sensorwert aus Home Assistant, groß auf dem Display | ja |
 | [`ha_verlauf`](sketches/ha_verlauf) | Temperaturkurve über 10 Tage mit Gitter und Achsen | ja |
+| [`ha_raeume`](sketches/ha_raeume) | sechs Räume plus Außen in einem Diagramm | ja |
 | [`ha_umschalten`](sketches/ha_umschalten) | zwei Sensoren im Wechsel; Testsketch für die Refresh-Modi | ja |
 | [`progress_bar`](sketches/progress_bar) | Fortschrittsanzeige, EXIT startet neu — Partial-Refresh | – |
 
@@ -168,6 +170,29 @@ Pixelspalte wird ein Wert gehalten — der Speicherbedarf bleibt so konstant, eg
 Messpunkte zurückkommen. Warum es 10 und nicht 14 Tage sind, steht unter
 *Home Assistant* → `purge_keep_days`.
 
+**`ha_raeume`** — sechs Temperaturkurven in einem Diagramm: Wohnzimmer, Schlafzimmer,
+Badezimmer, Küche, Flur und Außen. Zeigt die zwei Probleme, die dabei auftreten und die es
+bei einer einzelnen Kurve nicht gibt:
+
+*Keine Farben.* Sechs verschiedene Strichmuster waren der erste Versuch, wirkten auf dem
+Panel aber unruhig. Jetzt sind alle Kurven durchgezogen und werden rechts neben ihrem
+Endpunkt beschriftet. Weil die Kurven dort oft nur wenige Pixel auseinanderliegen — aktuell
+enden alle sechs zwischen 21,6 und 22,9 °C, also innerhalb von zehn Pixeln — weichen
+kollidierende Beschriftungen nach unten aus, und eine Führungslinie verbindet jede mit
+ihrem tatsächlichen Kurvenende. Ohne die ginge durch das Verschieben genau die Zuordnung
+verloren, um die es geht. Der Preis: Wo sich zwei Kurven kreuzen, lässt sich nicht mehr
+sagen, welche welche ist.
+
+*Gemeinsame y-Achse.* Außen (der Solarnode) erreicht in der Sonne knapp 40 °C, innen liegt
+alles zwischen 20 und 28. Die Achse umfasst deshalb rund 20 K, und die fünf Innenkurven
+drängen sich im unteren Drittel. Das ist bewusst so: Eine gekappte Außenkurve würde zeigen,
+*dass* es draußen wärmer war, aber nicht wie warm — und genau dieser Kontrast ist der
+interessante Teil.
+
+Fällt ein Sensor aus, zeichnet der Sketch die übrigen und markiert den fehlenden in der
+Legende mit `n/a`. Nur wenn alle sechs ausfallen, erscheint ein Fehlerbild — anders als
+`ha_verlauf`, wo eine fehlende Antwort das ganze Bild kostet.
+
 **`ha_umschalten`** — Testsketch. Blendet im 5-Sekunden-Takt zwischen Wohnzimmer- und
 Schlafzimmerkurve um und wechselt dabei reihum Voll-, Fast- und Partial-Refresh durch;
 Modus und gemessene Dauer stehen auf dem Display. Ergebnis siehe
@@ -190,6 +215,35 @@ cp sketches/<name>/secrets.h.example sketches/<name>/secrets.h
 
 Sie ist per `.gitignore` ausgeschlossen und wird **nicht** committet — committet wird nur
 `secrets.h.example` mit Platzhaltern.
+
+## Simulator
+
+Layout ausprobieren, ohne zu flashen:
+
+```bash
+make sim-fetch SKETCH=sketches/ha_raeume   # echte HA-Antworten nach tools/simulator/data/
+make sim       SKETCH=sketches/ha_raeume   # -> tools/simulator/out.png
+```
+
+Der Sketch wird dabei **nativ auf dem Mac** übersetzt und sein Bildpuffer als PNG
+ausgegeben. Entscheidend für die Aussagekraft: `EPD.cpp` und `EPDfont.h` sind die *echten*
+Dateien aus dem Sketch-Ordner, der Sketch selbst bleibt unverändert. Ersetzt sind nur
+Arduino, WLAN und HTTP (`tools/simulator/arduino/`). Der `HTTPClient`-Stub liefert dort, wo
+auf dem Gerät die HTTP-Antwort käme, eine lokale Datei — `fetch.sh` holt sie per `curl` aus
+der echten Instanz und liest die entity_ids dafür aus der `.ino`, damit keine zweite Liste
+veralten kann.
+
+Auch die 8 Pixel Naht bei x = 396 rechnet der Simulator heraus: Das PNG zeigt die
+sichtbaren 792 Pixel, nicht den 800 Pixel breiten Rohpuffer.
+
+**Warum dieser Aufwand statt eines schnellen Nachbaus:** Ein Prototyp mit eigenen
+Schriftmetriken hat in `ha_verlauf` eine 6-px-Überlappung *nicht* gezeigt, die auf dem Panel
+da war. Ein Simulator ist nur so viel wert wie seine Übereinstimmung mit dem Original.
+Gleich der erste Lauf hat sich bezahlt gemacht: In der Kopfzeile von `ha_raeume` stand
+„Stand 23.08. 16:05 °C" — das Gradzeichen aus `ha_verlauf`, wo es hinter einem Messwert
+saß, hing hier hinter der Uhrzeit.
+
+Braucht ImageMagick (`brew install imagemagick`) für die Umwandlung von PBM nach PNG.
 
 ## Elecrow-Beispiele
 
