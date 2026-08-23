@@ -49,6 +49,14 @@ Beide müssen gepflegt werden.
 - **Schriftgrößen: nur 12, 16, 24, 48.** Auch 8 zeichnet nichts — `EPD_ShowChar()`
   kennt dafür keinen Font-Zweig und steigt per `else return;` aus.
   Zeichenbreite ist `size/2`, `EPD_ShowString()` bricht nicht um.
+- **Der Font ist dickte-gleich — auch das Komma.** `EPD_ShowString()` rückt je Zeichen
+  stur `size/2` px vor. Die Tinte einer Ziffer füllt die Zelle fast ganz aus (bei Größe 48
+  die Spalten 2..23 von 24), die des Kommas nur die Spalten 0..6. Hinter dem Komma klaffen
+  dadurch ~20 leere Pixel und „23,1" sieht aus, als stünde dort ein Leerzeichen. Abhilfe:
+  zeichenweise mit `EPD_ShowChar()` setzen und nach Komma/Punkt nur `size/4` vorrücken
+  (`showNumber()` in `ha_kacheln`). Weiter nicht — `EPD_ShowChar()` malt die **ganze Zelle
+  inklusive Hintergrund**, eine zu weit nach links gezogene Folgezelle radiert das Komma
+  wieder aus.
 - **Nur ASCII 32..126.** Font-Arrays haben 95 Einträge, Index ist `chr - ' '`.
   `°` (176) → Index 144, liest über das Array hinaus. Gilt auch für Umlaute.
 - **Ausrichtung:** `EPD.h` liefert `Rotation 180` — steht bei diesem Aufbau auf dem Kopf.
@@ -189,6 +197,7 @@ Faustregel: MCP zum Stöbern, `curl` zum Verifizieren dessen, was der ESP32 sieh
 | `ha_temperatur` | ein HA-Sensorwert groß auf dem Display |
 | `ha_verlauf` | Temperaturkurve über 10 Tage mit Gitter und Achsen |
 | `ha_raeume` | sechs Räume plus Außen in einem Diagramm, Beschriftung am Kurvenende |
+| `ha_kacheln` | alle Räume plus Außen als Kacheln, nach Temperatur sortiert, mit Trend |
 | `ha_umschalten` | zwei Sensoren im Wechsel; Testsketch für die drei Refresh-Modi |
 | `progress_bar` | Fortschrittsanzeige, EXIT startet neu — Partial-Refresh richtig genutzt |
 
@@ -272,7 +281,10 @@ git diff --cached | grep -c 'eyJhbGciOi'          # nur der Platzhalter darf tre
 
 ## Stand
 
-Auf dem Board läuft `sketches/ha_verlauf`, Aktualisierung alle 30 Minuten.
+Auf dem Board läuft `sketches/ha_kacheln`, Aktualisierung alle 10 Minuten
+(jeder sechste Durchgang mit Vollrefresh). Zurück zum vorherigen Sketch:
+`make flash SKETCH=sketches/ha_verlauf`.
+
 Alles committet, Arbeitsverzeichnis sauber.
 
 Remote ist `git@github.com:rsascha/claude-arduino-display.git` und **privat — das bleibt

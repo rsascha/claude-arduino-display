@@ -145,6 +145,7 @@ Eigene Sketches in `sketches/`. Kompilieren und flashen mit
 | [`ha_temperatur`](sketches/ha_temperatur) | ein Sensorwert aus Home Assistant, groß auf dem Display | ja |
 | [`ha_verlauf`](sketches/ha_verlauf) | Temperaturkurve über 10 Tage mit Gitter und Achsen | ja |
 | [`ha_raeume`](sketches/ha_raeume) | sechs Räume plus Außen in einem Diagramm | ja |
+| [`ha_kacheln`](sketches/ha_kacheln) | alle Räume plus Außen als Kacheln, sortiert nach Temperatur | ja |
 | [`ha_umschalten`](sketches/ha_umschalten) | zwei Sensoren im Wechsel; Testsketch für die Refresh-Modi | ja |
 | [`progress_bar`](sketches/progress_bar) | Fortschrittsanzeige, EXIT startet neu — Partial-Refresh | – |
 
@@ -163,7 +164,7 @@ dargestellt. Fehler landen **auf dem Display**, nicht nur im Log: HTTP 401 und 4
 mit einem Hinweis auf die wahrscheinliche Ursache angezeigt, sonst sieht man bei einem
 Problem nur ein leeres Panel.
 
-**`ha_verlauf`** — der Sketch, der im Dauerbetrieb läuft, Aktualisierung alle 30 Minuten.
+**`ha_verlauf`** — Aktualisierung alle 30 Minuten.
 Holt 10 Tage History und zeichnet daraus eine Kurve mit Gitter, Datums- und Gradachse. Die
 Antwort (~19 KB) wird direkt mit `strstr()` gescannt statt mit einem JSON-Parser, und je
 Pixelspalte wird ein Wert gehalten — der Speicherbedarf bleibt so konstant, egal wie viele
@@ -192,6 +193,50 @@ interessante Teil.
 Fällt ein Sensor aus, zeichnet der Sketch die übrigen und markiert den fehlenden in der
 Legende mit `n/a`. Nur wenn alle sechs ausfallen, erscheint ein Fehlerbild — anders als
 `ha_verlauf`, wo eine fehlende Antwort das ganze Bild kostet.
+
+**`ha_kacheln`** — dieselben sechs Sensoren wie `ha_raeume`, aber ohne Verlauf: ein
+3×2-Raster aus Kacheln mit Name, aktuellem Wert in Schriftgröße 48 und dem Trend gegenüber
+dem Stand von vor drei Stunden. Sortiert ist nach Temperatur, warm nach kalt in
+Lesereihenfolge — oben links der wärmste Raum, unten rechts der kälteste. Die Rangfolge
+steckt damit in der Anordnung und braucht keine eigene Beschriftung.
+
+*Warum drei Stunden.* Die SONOFF-Sensoren lösen 0,1 K auf. Über eine Stunde bewegt sich ein
+geschlossener Raum oft nur um genau diesen einen Schritt — der Pfeil zeigte dann Rauschen
+an. Über drei Stunden ist ein geöffnetes Fenster deutlich zu sehen, der Tagesgang draußen
+aber noch nicht beherrschend. Als unverändert gilt alles unter 0,2 K; dafür gibt es einen
+waagerechten Strich statt eines Pfeils.
+
+*Eine Abfrage statt zwei.* Der Trend kommt aus derselben History-Antwort wie der aktuelle
+Wert: letzter Messwert der Antwort = jetzt, letzter Messwert vor dem Referenzzeitpunkt =
+Vergleich. Ein zusätzliches `GET /api/states/<entity_id>` wäre eine zweite Anfrage für eine
+Zahl, die schon da ist. Gesucht wird dabei bewusst der letzte Wert **vor** dem
+Referenzzeitpunkt und nicht der erste der Antwort — nur so liefert die Funktion auch dann
+den richtigen Vergleich, wenn ihr ein längerer Zeitraum vorgesetzt wird, wie es der
+Simulator mit seinen 10-Tage-Dateien tut.
+
+*Zahlen auf Deutsch.* `snprintf()` schreibt immer einen Punkt, und die Locale-Umschaltung,
+die das ändern würde, gibt es in der Arduino-Laufzeit nicht — das Komma wird deshalb
+nachträglich gesetzt. Damit fällt sofort auf, dass der Font dickte-gleich ist: Das Komma
+bekommt dieselbe Zellenbreite wie eine Ziffer, seine Tinte belegt davon aber nur die ersten
+7 von 24 px. „23,1" sah dadurch aus, als stünde dort ein Leerzeichen. Der Wert wird deshalb
+zeichenweise gesetzt und nach dem Komma nur um `size/4` vorgerückt — weiter nicht, denn
+`EPD_ShowChar()` malt die ganze Zelle inklusive Hintergrund und würde das Komma sonst
+wieder ausradieren. Die Trendzahl steht bewusst **ohne** Einheit da: korrekt wäre Kelvin,
+weil es eine Differenz ist, aber ein „K“ hinter der Zahl fragt auf einem Wohnzimmer-Display
+mehr, als es beantwortet. Was gemeint ist, sagen der Pfeil und die Fußzeile.
+
+*Pfeil selbst gezeichnet.* Die Font-Arrays decken ASCII 32..126 ab, ein Pfeilzeichen ist
+nicht dabei. Das Dreieck wird deshalb zeilenweise gefüllt statt als Umriss: bei 16 × 12 px
+wäre eine 1 px starke Kontur auf dem Panel kaum zu erkennen — dieselbe Beobachtung wie bei
+`EPD_DrawCircle()`. Aus dem gleichen Grund sind Rahmen und Rasterlinien 2 px stark.
+
+*Refresh.* Alle 10 Minuten `EPD_FastUpdate()`, jeder sechste Durchgang — also stündlich —
+mit Löschzyklus. Genau die Aufteilung, die der Vergleich in `ha_umschalten` nahelegt:
+Fast-Update als Regelfall, Vollrefresh nur, um Ghosting einzusammeln. `ha_verlauf` macht
+das noch anders und fährt bei jeder Aktualisierung den vollen Zyklus.
+
+Fällt ein Sensor aus, zeigt seine Kachel `n/a` und rutscht ans Ende der Sortierung; ein
+Fehlerbild gibt es nur, wenn alle sechs ausfallen.
 
 **`ha_umschalten`** — Testsketch. Blendet im 5-Sekunden-Takt zwischen Wohnzimmer- und
 Schlafzimmerkurve um und wechselt dabei reihum Voll-, Fast- und Partial-Refresh durch;
