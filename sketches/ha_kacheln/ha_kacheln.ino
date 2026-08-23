@@ -84,12 +84,24 @@ const int NROOM = sizeof(ROOMS) / sizeof(ROOMS[0]);
 // Das Raster teilt die Flaeche zwischen dem 2 px starken Aussenrahmen in drei
 // Spalten und zwei Zeilen; unten bleibt ein Streifen fuer die Fusszeile.
 //
-// Eine Kachel ist 262 x 122 px gross. Der Wert in Groesse 48 belegt bei
-// "-12.3 C" 5*24 + 40 + 24 = 184 px — er passt also auch mit Vorzeichen und
-// Gradzeichen in die Spalte. Vertikal braucht jede Textzeile `size` Pixel Hoehe,
-// nicht weniger: 6 + 16 (Name) + 8 + 48 (Wert) + 14 + 16 (Trend) = 108 < 122.
-// In ha_verlauf hatten sich zwei Zeilen um 6 px ueberlappt, weil genau diese
-// Rechnung fehlte.
+// Eine Kachel ist 262 x 122 px gross und enthaelt zwei Zeilen: den Namen und
+// darunter den Wert. Der Trend steht RECHTS neben dem Wert, nicht darunter —
+// als dritte Zeile kostete er 30 px Hoehe, neben dem Wert kostet er nichts:
+// "22,9 C" belegt 148 px, in den restlichen 94 px der Kachel hat der Trend
+// bequem Platz. Die gewonnene Hoehe geht an Name und Trend, die dadurch von
+// Groesse 16 auf 24 wachsen konnten.
+//
+// Der Wert selbst bleibt bei 48 — das ist die groesste Groesse, die der Font
+// kennt (12, 16, 24, 48 und sonst nichts, siehe EPD_ShowChar()).
+//
+// Breitester Fall ist eine zweistellige Minustemperatur: "-12,3 C" belegt
+// 4*24 + 12 (enges Komma) + 40 + 24 = 172 px, der Trendblock hoechstens 74 px,
+// zusammen 246 px = genau der Inhaltsbreite einer Kachel. Enger wird es nicht.
+//
+// Vertikal braucht jede Textzeile `size` Pixel Hoehe, nicht weniger:
+// 24 (Name) + 12 + 48 (Wert) = 84, der Rest verteilt sich als Rand oben und
+// unten. In ha_verlauf hatten sich zwei Zeilen um 6 px ueberlappt, weil genau
+// diese Rechnung fehlte.
 const int FRAME_X0 = 2,   FRAME_X1 = SCREEN_W - 3;   // 789
 const int FRAME_Y0 = 2,   FRAME_Y1 = SCREEN_H - 3;   // 269
 const int GRID_Y1  = 247;                            // untere Rasterlinie
@@ -97,12 +109,25 @@ const int COL_X[]  = { FRAME_X0, 264, 526, FRAME_X1 };
 const int ROW_Y[]  = { FRAME_Y0, 124, GRID_Y1 };
 const int NCOL = 3, NROW = 2;
 
-const int PAD_X = 10, PAD_Y = 6;
-const int NAME_SZ  = 16, VALUE_SZ = 48, TREND_SZ = 16;
-const int NAME_DY  = 0;                 // relativ zum Kachelinhalt
-const int VALUE_DY = NAME_DY + NAME_SZ + 8;
-const int TREND_DY = VALUE_DY + VALUE_SZ + 14;
-const int FOOTER_Y = GRID_Y1 + 5;       // 252, Textzeile 252..268
+// Oberkante des Kachelinhalts. Zeile 2 beginnt unter der 2 px starken
+// Trennlinie, nicht auf ihr — sonst waere die untere Kachel 2 px flacher als
+// die obere und die Werte staenden nicht auf einer Linie.
+const int ROW_TOP[] = { FRAME_Y0, 126 };
+const int TILE_H    = 122;
+
+const int NAME_SZ = 24, VALUE_SZ = 48, TREND_SZ = 24;
+const int PAD_X   = 8;
+const int NAME_DY  = 0;                              // relativ zum Kachelinhalt
+const int VALUE_DY = NAME_DY + NAME_SZ + 12;         // 36
+const int CONTENT_H = VALUE_DY + VALUE_SZ;           // 84
+const int PAD_Y     = (TILE_H - CONTENT_H) / 2;      // 19, oben wie unten
+
+const int ARROW_W = 20, ARROW_H = 16;                // passend zu Groesse 24
+// Die Fusszeile hat eine eigene Groesse, auch wenn sie zufaellig mal mit der
+// des Trends uebereinstimmte: unter dem Raster sind nur 20 px frei, eine
+// 24er-Zeile liefe hier unten aus dem Bild.
+const int FOOTER_SZ = 16;
+const int FOOTER_Y  = GRID_Y1 + 5;                   // 252, Textzeile 252..268
 
 Tile tiles[NROOM];
 bool lastOk = false;
@@ -374,14 +399,17 @@ static void drawGrid() {
 }
 
 static void drawTile(int col, int row, const Tile& t) {
-  const int x = COL_X[col] + PAD_X;
-  const int y = ROW_Y[row] + PAD_Y;
+  const int x       = COL_X[col] + PAD_X;
+  const int y       = ROW_TOP[row] + PAD_Y;
+  const int rightX  = COL_X[col + 1] - PAD_X;   // rechte Kante des Inhalts
 
   EPD_ShowString(x, y + NAME_DY, ROOMS[t.room].label, NAME_SZ, BLACK);
 
   if (!t.ok) {
     EPD_ShowString(x, y + VALUE_DY, "n/a", VALUE_SZ, BLACK);
-    EPD_ShowString(x, y + TREND_DY, "kein Messwert", TREND_SZ, BLACK);
+    const char* msg = "kein Messwert";
+    EPD_ShowString(rightX - textWidth(msg, 16), y + VALUE_DY + VALUE_SZ / 2 - 8,
+                   msg, 16, BLACK);
     return;
   }
 
@@ -395,14 +423,20 @@ static void drawTile(int col, int row, const Tile& t) {
   cursor += 26;
   EPD_ShowString(cursor, y + VALUE_DY, "C", VALUE_SZ, BLACK);
 
+  // Der Trend steht rechtsbuendig an der Kachelkante, nicht in festem Abstand
+  // hinter dem Wert: die Werte sind verschieden breit ("23,1" gegen "-3,5"),
+  // und ein mitwanderender Trend liesse die sechs Kacheln unruhig wirken.
+  // Senkrecht sitzt er auf der Mitte des Wertes.
+  const int midY = y + VALUE_DY + VALUE_SZ / 2;
+
   if (!t.hasRef) {
-    EPD_ShowString(x, y + TREND_DY, "kein Vergleichswert", TREND_SZ, BLACK);
+    const char* msg = "kein Vergleich";
+    EPD_ShowString(rightX - textWidth(msg, 16), midY - 8, msg, 16, BLACK);
     return;
   }
 
   const float d = t.value - t.ref;
   const int dir = (d > TREND_FLAT) ? 1 : (d < -TREND_FLAT ? -1 : 0);
-  drawTrendArrow(x, y + TREND_DY + 2, 16, 12, dir);
 
   // Ohne Einheit: die Differenz zweier Temperaturen waere korrekt in Kelvin
   // anzugeben, auf einem Wohnzimmer-Display ist ein "K" hinter der Zahl aber
@@ -414,7 +448,11 @@ static void drawTile(int col, int row, const Tile& t) {
   if (fabsf(d) < 0.05f) snprintf(trend, sizeof(trend), "0.0");
   else                  snprintf(trend, sizeof(trend), "%+.1f", d);
   commaDecimal(trend);
-  showNumber(x + 24, y + TREND_DY, trend, TREND_SZ, BLACK);
+
+  const int trendW = ARROW_W + 8 + numberWidth(trend, TREND_SZ);
+  const int trendX = rightX - trendW;
+  drawTrendArrow(trendX, midY - ARROW_H / 2, ARROW_W, ARROW_H, dir);
+  showNumber(trendX + ARROW_W + 8, midY - TREND_SZ / 2, trend, TREND_SZ, BLACK);
 }
 
 static void drawFooter() {
@@ -423,12 +461,12 @@ static void drawFooter() {
   const time_t nowT = time(nullptr);
   localtime_r(&nowT, &lt);
   strftime(stamp, sizeof(stamp), "Stand %d.%m. %H:%M", &lt);
-  EPD_ShowString(COL_X[0] + PAD_X, FOOTER_Y, stamp, TREND_SZ, BLACK);
+  EPD_ShowString(COL_X[0] + PAD_X, FOOTER_Y, stamp, FOOTER_SZ, BLACK);
 
   char hint[64];
   snprintf(hint, sizeof(hint), "Pfeil und Zahl: Veraenderung in Grad seit %d h", TREND_HOURS);
-  EPD_ShowString(FRAME_X1 - PAD_X - textWidth(hint, TREND_SZ), FOOTER_Y,
-                 hint, TREND_SZ, BLACK);
+  EPD_ShowString(FRAME_X1 - PAD_X - textWidth(hint, FOOTER_SZ), FOOTER_Y,
+                 hint, FOOTER_SZ, BLACK);
 }
 
 // Warm nach kalt, Kacheln ohne Messwert ans Ende. Insertion Sort, n = 6.

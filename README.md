@@ -200,6 +200,13 @@ dem Stand von vor drei Stunden. Sortiert ist nach Temperatur, warm nach kalt in
 Lesereihenfolge — oben links der wärmste Raum, unten rechts der kälteste. Die Rangfolge
 steckt damit in der Anordnung und braucht keine eigene Beschriftung.
 
+*Trend neben den Wert, nicht darunter.* Als dritte Textzeile kostete er 30 px Höhe; neben
+dem Wert kostet er nichts, weil dort ohnehin 94 px frei sind. Die gewonnene Höhe geht an
+Name und Trend, die dadurch von Größe 16 auf 24 wachsen konnten — der Messwert selbst nicht,
+48 ist die größte Größe, die `EPD_ShowChar()` kennt. Der Trend steht rechtsbündig an der
+Kachelkante statt in festem Abstand hinter dem Wert: „23,1" und „-3,5" sind verschieden
+breit, ein mitwandernder Trend ließe die sechs Kacheln unruhig wirken.
+
 *Warum drei Stunden.* Die SONOFF-Sensoren lösen 0,1 K auf. Über eine Stunde bewegt sich ein
 geschlossener Raum oft nur um genau diesen einen Schritt — der Pfeil zeigte dann Rauschen
 an. Über drei Stunden ist ein geöffnetes Fenster deutlich zu sehen, der Tagesgang draußen
