@@ -175,7 +175,7 @@ sketches/          Eigene Sketches (secrets.h darin ist gitignored)
 libraries/         Elecrow-Library-Bundle (zugleich Sketchbook-libraries/)
 examples/          Offizielle Elecrow-Beispiele + Demos — Vorlagen zum Kopieren
 factory_firmware/  Werksfirmware als Backup
-material/          Handbuch (PDF) und Fotos des Panels (JPEG; *.HEIC ist gitignored)
+material/          Handbuch + Datenblätter (PDF), Fotos (JPEG; *.HEIC ist gitignored)
 Makefile
 ```
 

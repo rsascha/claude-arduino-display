@@ -102,7 +102,7 @@ sketches/         Eigene Sketches (hello_epaper, ...)
 libraries/        Elecrow-Libraries — zugleich Sketchbook-libraries/
 examples/         Offizielle Elecrow-Beispiele + Demos
 factory_firmware/ Werksfirmware als Backup
-material/         Handbuch (PDF) und Fotos des laufenden Panels
+material/         Handbuch + Datenblätter (PDF), Fotos des laufenden Panels
 Makefile          Build-/Flash-Targets
 ```
 
@@ -141,11 +141,12 @@ mit `arduino-cli config set directories.user ~/Documents/Arduino`.
 - [Elecrow Wiki – Arduino Tutorial](https://www.elecrow.com/wiki/CrowPanel_ESP32_E-Paper_5.79inch_Arduino_Tutorial.html)
 - [GitHub – Elecrow-RD/CrowPanel-ESP32-5.79-E-paper-HMI-Display-with-272-792](https://github.com/Elecrow-RD/CrowPanel-ESP32-5.79-E-paper-HMI-Display-with-272-792)
 - Benutzerhandbuch (deutsch): `material/crowpanel-5.79-benutzerhandbuch.pdf` — Rückseiten-Beschriftung, Bedienelemente, Spezifikation
-- [SSD1683 Datenblatt](https://www.elecrow.com/download/product/DIS08792E/SSD1683_Datasheet.PDF) — Display-Controller, 49 Seiten
-- [ESP32-S3-WROOM-1 Datenblatt](https://www.elecrow.com/download/product/DIS08792E/esp32-s3-wroom-1_datasheet.pdf) — Modul, Pinout, elektrische Werte
+- [SSD1683 Datenblatt](https://www.elecrow.com/download/product/DIS08792E/SSD1683_Datasheet.PDF) — Display-Controller, 49 Seiten; liegt auch als `material/ssd1683-datasheet.pdf` im Repo
+- [ESP32-S3-WROOM-1 Datenblatt](https://www.elecrow.com/download/product/DIS08792E/esp32-s3-wroom-1_datasheet.pdf) — Modul, Pinout, elektrische Werte; liegt auch als `material/esp32-s3-wroom-1-datasheet.pdf` im Repo
 
 Die beiden Datenblatt-Links stehen im Handbuch nur als QR-Code (S. 4–5); der Text des
-PDFs enthält sie nicht.
+PDFs enthält sie nicht. Deshalb liegen die Datenblätter mit im Repo — geht der Elecrow-
+Download irgendwann offline, wäre der Weg dorthin sonst nur noch über die QR-Codes.
 
 ## Zeichen-API (Elecrow `EPD.h`)
 

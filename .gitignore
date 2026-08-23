@@ -16,7 +16,3 @@ secrets.h
 
 # Foto-Originale: bleiben lokal, committet wird die verkleinerte JPEG
 material/*.HEIC
-
-# Fremd-Datenblätter: bleiben lokal, Links stehen in README.md
-material/ssd1683-datasheet.pdf
-material/esp32-s3-wroom-1-datasheet.pdf
