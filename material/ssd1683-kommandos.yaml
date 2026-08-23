@@ -109,7 +109,15 @@ kommandos:
     name: Write RAM (RED)
     seite: 30
     belegt_durch: datenblatt
-    hinweis: beim S/W-Panel nur zum Loeschen beschrieben
+    hinweis: >-
+      Beim S/W-Panel kein Farbkanal, sondern das VORHERIGE Bild: der Partial-Modus
+      waehlt seine Waveform pro Pixel aus dem Uebergang alt (0x26) -> neu (0x24).
+    achtung: >-
+      EPD_Display() schreibt nur 0x24/0xA4, EPD_Display_Clear() hinterlaesst in
+      0x26/0xA6 den Wert 0x00. Vor dem ersten EPD_PartUpdate() deshalb
+      EPD_Clear_R26A6H() aufrufen (setzt 0xFF = vorher weiss) — sonst wird die
+      erste Aenderung hellgrau statt schwarz. Am Geraet reproduziert und behoben,
+      23.08.2026; siehe PROGRESS_BAR.md.
 
   - hex: 0x3C
     name: Border Waveform Control

@@ -4,6 +4,7 @@ Arduino-Projekt für das **Elecrow CrowPanel ESP32 5.79" E-Paper HMI Display**
 (272×792, S/W, ESP32-S3-WROOM-1-N8R8, 2× SSD1683 über SPI).
 
 Ausführliche Doku inkl. Quellen: `README.md`.
+Partial-Refresh im Detail: `PROGRESS_BAR.md`.
 
 ## Bauen und Flashen
 
@@ -70,6 +71,19 @@ Beide müssen gepflegt werden.
   `EPD_PartUpdate()` ist für Vollbildwechsel unbrauchbar: `EPD_Display()` schreibt immer
   das ganze RAM beider Controller. Partial lohnt erst mit eingeengtem RAM-Adressbereich
   (`0x44`/`0x45`) für kleine Ausschnitte — Fortschrittsbalken, tickende Uhr.
+- **Vor dem ersten `EPD_PartUpdate()` gehört `EPD_Clear_R26A6H()`** — sonst wird die erste
+  Änderung hellgrau statt schwarz. Der SSD1683 hat zwei RAMs: `0x24`/`0xA4` das neue Bild,
+  `0x26`/`0xA6` das vorherige. Partial wählt seine Waveform pro Pixel aus dem Übergang
+  *alt → neu* und braucht beide. `EPD_Display_Clear()` hinterlässt in `0x26` aber `0x00`,
+  und `EPD_Display()` schreibt **nur** `0x24`/`0xA4` — das falsche „alte Bild" bleibt also
+  stehen. `EPD_Clear_R26A6H()` setzt es auf `0xFF` (= vorher weiß). Ab dem zweiten Update
+  führt der Controller `0x26` selbst nach, deshalb fällt der Fehler nur beim ersten auf und
+  sieht nach einem Kontrastproblem des Panels aus. Elecrow macht es in `5.79_key` Zeile
+  36–38 genauso; im Treiber steht kein Kommentar dazu, das Datenblatt schweigt ebenfalls.
+- **Im Partial-Betrieb nicht zwischendurch neu initialisieren.** `EPD_FastMode1Init()`
+  enthält einen `EPD_HW_RESET()`, und ein zurückgesetzter Controller kennt das vorherige
+  Bild nicht mehr. Einmal je Durchlauf initialisieren, dann nur noch
+  `EPD_Display()` + `EPD_PartUpdate()`.
 - **Refresh-Zyklen sind endlich.** Sekundentakt ist als Test in Ordnung, als Dauerbetrieb
   nicht. `ha_umschalten` ist ein Testsketch, kein Betriebszustand.
 - **Schriftgröße 16 ist auf dem Panel gut lesbar** — für Achsenbeschriftungen reicht sie,
@@ -173,6 +187,7 @@ Faustregel: MCP zum Stöbern, `curl` zum Verifizieren dessen, was der ESP32 sieh
 | `ha_temperatur` | ein HA-Sensorwert groß auf dem Display |
 | `ha_verlauf` | Temperaturkurve über 10 Tage mit Gitter und Achsen |
 | `ha_umschalten` | zwei Sensoren im Wechsel; Testsketch für die drei Refresh-Modi |
+| `progress_bar` | Fortschrittsanzeige, EXIT startet neu — Partial-Refresh richtig genutzt |
 
 Fehler gehören **auf das Display**, nicht nur ins Log — sonst sieht man bei einem Problem
 nur ein leeres Panel. `ha_temperatur` und `ha_verlauf` zeigen HTTP 401/404 mit einem
@@ -189,6 +204,7 @@ material/          Handbuch + Datenblätter (PDF + .txt), Fotos (JPEG; *.HEIC is
                    → `material/CLAUDE.md` fasst die Datenblätter mit Seitenangaben zusammen
                    → `.txt` je PDF zum Durchsuchen, `make material-txt` erzeugt sie neu
                    → `*.yaml`: Kommando- und GPIO-Tabellen maschinenlesbar
+PROGRESS_BAR.md    Fortschrittsanzeige und Partial-Refresh — Beispiel `sketches/progress_bar`
 Makefile
 ```
 
