@@ -106,12 +106,14 @@ make flash SKETCH=examples/5.79_wifi    # anderen Sketch wählen
 ## Struktur
 
 ```
-sketches/         Eigene Sketches (hello_epaper, ...)
+sketches/         Eigene Sketches — siehe Abschnitt „Sketches"
 libraries/        Elecrow-Libraries — zugleich Sketchbook-libraries/
 examples/         Offizielle Elecrow-Beispiele + Demos
 factory_firmware/ Werksfirmware als Backup
-material/         Handbuch + Datenblätter (PDF), Fotos des laufenden Panels
-Makefile          Build-/Flash-Targets
+material/         Handbuch + Datenblätter (PDF und .txt), Fotos des laufenden Panels,
+                  Kommando- und GPIO-Tabellen als YAML
+Makefile          Build-/Flash-Targets, dazu `make material-txt`
+PROGRESS_BAR.md   Fortschrittsanzeige und Partial-Refresh im Detail
 LICENSE           MIT für den eigenen Code, plus Herkunft des Fremdmaterials
 ```
 
@@ -130,7 +132,68 @@ Verzeichnis, damit `libraries/`, `examples/` und `sketches/` automatisch gefunde
 Rückgängig: in der IDE unter `Einstellungen → Sketchbook-Speicherort`, für die CLI
 mit `arduino-cli config set directories.user ~/Documents/Arduino`.
 
-## Beispiele
+## Sketches
+
+Eigene Sketches in `sketches/`. Kompilieren und flashen mit
+`make flash SKETCH=sketches/<name>`.
+
+| Sketch | Kurz | WLAN |
+|---|---|---|
+| [`hello_epaper`](sketches/hello_epaper) | Text, Formen, Grundlayout — der Einstieg | – |
+| [`smiley`](sketches/smiley) | eigene Bogen-Funktion, `safePixel()`, Kreise mit Strichstärke | – |
+| [`ha_temperatur`](sketches/ha_temperatur) | ein Sensorwert aus Home Assistant, groß auf dem Display | ja |
+| [`ha_verlauf`](sketches/ha_verlauf) | Temperaturkurve über 10 Tage mit Gitter und Achsen | ja |
+| [`ha_umschalten`](sketches/ha_umschalten) | zwei Sensoren im Wechsel; Testsketch für die Refresh-Modi | ja |
+| [`progress_bar`](sketches/progress_bar) | Fortschrittsanzeige, EXIT startet neu — Partial-Refresh | – |
+
+**`hello_epaper`** — der Startpunkt. Text in mehreren Größen, ein Rahmen, ein paar Formen.
+Zeigt, warum der Puffer 27200 Byte groß ist und was `digitalWrite(7, HIGH)` damit zu tun
+hat, dass überhaupt etwas erscheint.
+
+**`smiley`** — ergänzt fehlende Zeichenprimitive. `EPD.h` kann Linie, Rechteck und Kreis,
+aber **keinen Bogen**; der Mund wird deshalb aus einzelnen Pixeln gebaut (Schrittweite
+`0.5f / radius`, sonst reißt die Linie bei großen Radien auf). Hier steht auch der
+`safePixel()`-Wrapper, den jeder eigene Zeichencode braucht: `Paint_SetPixel()` prüft seine
+Koordinaten nicht und schreibt sonst über den Puffer hinaus.
+
+**`ha_temperatur`** — ein Wert aus Home Assistant über `GET /api/states/<entity_id>`, groß
+dargestellt. Fehler landen **auf dem Display**, nicht nur im Log: HTTP 401 und 404 werden
+mit einem Hinweis auf die wahrscheinliche Ursache angezeigt, sonst sieht man bei einem
+Problem nur ein leeres Panel.
+
+**`ha_verlauf`** — der Sketch, der im Dauerbetrieb läuft, Aktualisierung alle 30 Minuten.
+Holt 10 Tage History und zeichnet daraus eine Kurve mit Gitter, Datums- und Gradachse. Die
+Antwort (~19 KB) wird direkt mit `strstr()` gescannt statt mit einem JSON-Parser, und je
+Pixelspalte wird ein Wert gehalten — der Speicherbedarf bleibt so konstant, egal wie viele
+Messpunkte zurückkommen. Warum es 10 und nicht 14 Tage sind, steht unter
+*Home Assistant* → `purge_keep_days`.
+
+**`ha_umschalten`** — Testsketch. Blendet im 5-Sekunden-Takt zwischen Wohnzimmer- und
+Schlafzimmerkurve um und wechselt dabei reihum Voll-, Fast- und Partial-Refresh durch;
+Modus und gemessene Dauer stehen auf dem Display. Ergebnis siehe
+*Die drei Refresh-Modi*. Beide Verläufe werden einmal geholt und im Speicher gehalten —
+löste jedes Umschalten eine HTTP-Anfrage aus, würde der Test die Netzwerklatenz messen
+statt das Panel. **Kein Dauerbetrieb:** E-Paper verträgt keine unbegrenzte Zahl an
+Refresh-Zyklen.
+
+**`progress_bar`** — fünf Segmente, alle 3 Sekunden eines mehr, EXIT startet neu. Der
+Gegentest zu `ha_umschalten`: Partial taugt nichts für einen Vollbildwechsel, wohl aber
+hier, wo sich pro Schritt nur ein Segment ändert. Der Sketch zeigt die zwei Bedingungen,
+ohne die das nicht funktioniert — `EPD_Clear_R26A6H()` vor dem ersten Partial-Update und
+kein Hardware-Reset zwischendurch. Ausführlich in **[`PROGRESS_BAR.md`](PROGRESS_BAR.md)**.
+
+Sketches mit WLAN brauchen eine `secrets.h` neben der `.ino`:
+
+```bash
+cp sketches/<name>/secrets.h.example sketches/<name>/secrets.h
+```
+
+Sie ist per `.gitignore` ausgeschlossen und wird **nicht** committet — committet wird nur
+`secrets.h.example` mit Platzhaltern.
+
+## Elecrow-Beispiele
+
+Vorlagen zum Kopieren, in `examples/`.
 
 | Sketch | Inhalt |
 |---|---|
