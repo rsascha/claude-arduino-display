@@ -176,6 +176,7 @@ libraries/         Elecrow-Library-Bundle (zugleich Sketchbook-libraries/)
 examples/          Offizielle Elecrow-Beispiele + Demos — Vorlagen zum Kopieren
 factory_firmware/  Werksfirmware als Backup
 material/          Handbuch + Datenblätter (PDF), Fotos (JPEG; *.HEIC ist gitignored)
+                   → `material/CLAUDE.md` fasst die Datenblätter mit Seitenangaben zusammen
 Makefile
 ```
 
