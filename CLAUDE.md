@@ -322,4 +322,6 @@ unter *Quellen*.
   umgestellt — Sascha wollte erst weitere Tests machen.
 - Deep Sleep statt `delay()`: Die HA-Sketches halten WLAN dauerhaft aktiv. Für Batterie-
   betrieb wäre `esp_deep_sleep_start()` der richtige Weg — E-Paper hält sein Bild ohne
-  Strom. Bisher nicht nötig, weil das Board am USB hängt.
+  Strom. Bisher nicht nötig, weil das Board am USB hängt. Der Akkuanschluss ist ein
+  **SH1.0-2P (1,0 mm)**, kein 1,25 mm — Details und Polaritätswarnung in `README.md`
+  → *Hardware* und `material/CLAUDE.md` → *Akkuanschluss*.

@@ -46,7 +46,7 @@ hier, nicht in den YAML-Dateien.
 **Bedienelemente** (S. 2 Abbildung, S. 3 Tabelle): An der Kante MENU, Rotary Switch
 (Drehschalter) und EXIT; auf der Platine BOOT und RESET. Die Abbildung auf S. 2 zeigt die
 **Rückseite mit USB-C unten** und dort zusätzlich PWR, TF-Kartenschacht, GPIO-Header,
-BAT-Anschluss (SH1.0-2P) und das ESP32-S3-WROOM-1-N8R8-Modul.
+BAT-Anschluss und das ESP32-S3-WROOM-1-N8R8-Modul.
 
 **Achtung bei der Reihenfolge:** Weil die Abbildung die Rückseite zeigt, steht sie beim
 Blick auf das Display mit USB oben und Elementen links kopf — dann ist von oben nach unten
@@ -61,6 +61,23 @@ Datenblatt ist der **SSD1683**.
 **Keine GPIO-Angaben.** Das Handbuch nennt an keiner Stelle Pinnummern; alle GPIOs in
 diesem Repo stammen aus dem Elecrow-Beispielcode. Auch die Links zu den beiden anderen
 PDFs stehen nur als QR-Code (S. 4–5), nicht im Text.
+
+### Akkuanschluss: SH1.0, 2-polig — Quelle ist das Wiki, nicht das Handbuch
+
+Der BAT-Stecker ist ein **SH1.0-2P (1,0 mm Raster)**, für 3,7-V-Li-Ion, Ladeschaltung
+sitzt auf der Platine. Das steht so im [Elecrow-Wiki zum 5.79"][wiki]; das Handbuch nennt
+an der Stelle nur „BAT". **1,25 mm (JST/MX1.25) passt nicht** — ein Nutzer im
+[Elecrow-Forum][forum] zu genau dieser SKU (DIS08792E) musste seinen LiPo mit
+„jst1.25 female adaptor und jst 1.0 male plug cable" umstecken.
+
+**Vor dem ersten Anstecken die Polarität messen.** Im selben Thread steht, dass
+handelsübliche Akkus mit SH1.0-Stecker die Polung teils vertauscht haben. Auf der Platine
+sind + und − am Stecker aufgedruckt; verpolt geht das Board schlicht nicht an. Ein
+Multimeter am losen Akkustecker kostet eine Minute, ein verpolter Akku unter Umständen
+das Board.
+
+[wiki]: https://www.elecrow.com/wiki/CrowPanel_ESP32_E-paper_5.79-inch_HMI_Display.html
+[forum]: https://forum.elecrow.com/discussion/1063/dis08792e-crowpanel-esp32-5-79-e-paper-hmi-display-powering-with-an-external-battery
 
 ---
 
@@ -249,6 +266,8 @@ am CH340, nicht am nativen USB des ESP32.
 - Die **GPIO-Zuordnung des Boards** — kommt ausschließlich aus dem Beispielcode
   (die fünf Tasten-GPIOs sind inzwischen am Gerät bestätigt, §4).
 - Die **+0x80-Verschiebung der Slave-Register** (siehe §2).
+- Der **Steckertyp des Akkuanschlusses**. Die Abbildung S. 2 schreibt nur „BAT"; dass es
+  ein SH1.0-2P ist, kommt aus Wiki und Forum (siehe §1).
 - Der Wert **`0xDC`** für den Teilrefresh (siehe §2).
 - Die **Waveform-Tabellen des konkreten Panels**. Sie liegen im OTP des Displays; das
   Datenblatt beschreibt nur Format und Suchmechanismus (S. 16–20, §6.7–6.11).

@@ -11,6 +11,13 @@ Setup für das Elecrow CrowPanel ESP32 5.79" E-Paper HMI Display (272×792, S/W,
 | Display-Controller | 2× SSD1683 (zwei Panel-Hälften) |
 | USB-UART | CH340 (VID 0x1A86 / PID 0x7523) |
 | Port | `/dev/cu.usbserial-210` |
+| Akku-Anschluss | SH1.0, 2-polig (1,0 mm Raster), 3,7 V Li-Ion, Ladeschaltung an Bord |
+
+**Der BAT-Stecker ist SH1.0, nicht 1,25 mm.** Ein JST/MX1.25-Akku passt nicht ohne
+Adapter. Und: Handelsübliche SH1.0-Akkukabel haben teils vertauschte Polung — vor dem
+ersten Anstecken gegen den Aufdruck + / − am Stecker messen. Belege und Quellen in
+`material/CLAUDE.md` → *Akkuanschluss*; das Benutzerhandbuch schreibt an der Stelle
+nur „BAT" und nennt den Typ nicht.
 
 ## Board-Einstellungen (Arduino IDE)
 
@@ -379,6 +386,7 @@ Vorlagen zum Kopieren, in `examples/`.
 - [Elecrow Wiki – 5.79" HMI Display](https://www.elecrow.com/wiki/CrowPanel_ESP32_E-paper_5.79-inch_HMI_Display.html)
 - [Elecrow Wiki – Arduino Tutorial](https://www.elecrow.com/wiki/CrowPanel_ESP32_E-Paper_5.79inch_Arduino_Tutorial.html)
 - [GitHub – Elecrow-RD/CrowPanel-ESP32-5.79-E-paper-HMI-Display-with-272-792](https://github.com/Elecrow-RD/CrowPanel-ESP32-5.79-E-paper-HMI-Display-with-272-792)
+- [Elecrow Forum – DIS08792E mit externem Akku betreiben](https://forum.elecrow.com/discussion/1063/dis08792e-crowpanel-esp32-5-79-e-paper-hmi-display-powering-with-an-external-battery) — SH1.0 statt 1,25 mm, Hinweis auf vertauschte Polung
 - Benutzerhandbuch (deutsch): `material/crowpanel-5.79-benutzerhandbuch.pdf` — Rückseiten-Beschriftung, Bedienelemente, Spezifikation
 - [SSD1683 Datenblatt](https://www.elecrow.com/download/product/DIS08792E/SSD1683_Datasheet.PDF) — Display-Controller, 49 Seiten; liegt auch als `material/ssd1683-datasheet.pdf` im Repo
 - [ESP32-S3-WROOM-1 Datenblatt](https://www.elecrow.com/download/product/DIS08792E/esp32-s3-wroom-1_datasheet.pdf) — Modul, Pinout, elektrische Werte; liegt auch als `material/esp32-s3-wroom-1-datasheet.pdf` im Repo
