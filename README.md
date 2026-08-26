@@ -409,9 +409,21 @@ zu raten wurden fünf Rezepte nacheinander auf das Panel geschickt und angesehen
 
 Die beiden Zutaten müssen also über Kreuz zusammenpassen. Gewählt ist die ruhige
 Kombination — das Flackern übernimmt der Löschzyklus davor, der Neuaufbau muss es nicht
-wiederholen. Sie entspricht zugleich Elecrows eigenem `5.79_Global_refresh`. Dass
-`EPD_Clear_R26A6H()` damit nicht überflüssig ist, sondern nur an eine andere Stelle gehört
-— vor den **ersten Teilrefresh** —, steht in [`PROGRESS_BAR.md`](PROGRESS_BAR.md).
+wiederholen. Sie entspricht zugleich Elecrows eigenem `5.79_Global_refresh`.
+
+*Und danach muss der Controller erfahren, was er anzeigt.* Auch mit dem richtigen Rezept
+kam der **erste** Tastendruck nach einem Wisch nur grau heraus, egal welche Taste; ab dem
+zweiten stimmte es. Auf dem Panel stand das Ruhebild, in RAM `0x26`/`0xA6` — dem
+„vorherigen Bild", aus dem der Teilrefresh seine Waveform je Pixel wählt — aber noch der
+Rest des Löschzyklus. `EPD_Clear_R26A6H()` löst das nicht: Es setzt „vorher alles weiß",
+richtig nur direkt nach dem Löschen. Gebraucht wird „genau das, was zu sehen ist", und
+dafür gibt es im Treiber keine Funktion. `merkeAltesBild()` schreibt deshalb den Bildpuffer
+mit der Adressrechnung aus `EPD_Display()` nach `0x26`/`0xA6`.
+
+Das beantwortet zugleich die Frage, die drei Fehlversuche offengelassen hatten: `0x26`
+benutzt **dieselbe Kodierung wie `0x24`**, 1 = weiß. Der Puffer wird unverändert übernommen
+und ergibt den richtigen Übergang — der Datenblattname „Write RAM (RED)" führt in die Irre.
+Ausführlich in [`PROGRESS_BAR.md`](PROGRESS_BAR.md).
 
 *`INPUT` genügt.* Die fünf Tasten haben 4,7-kΩ-Pull-ups auf der Platine
 (`material/SCHALTPLAN.md` → *Tasten*), der Pin ist also nicht offen. `INPUT_PULLUP` würde

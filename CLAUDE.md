@@ -102,9 +102,18 @@ Beide müssen gepflegt werden.
   wie ein Hardware- oder Kontrastproblem, sind aber ein Register-Missverständnis. Zweimal
   hintereinander `EPD_Display()` + `EPD_Update()` lässt das Panel ebenfalls weiß — der
   zweite Aufbau rechnet dann gegen ein `0x26`, das der Controller nach dem ersten Update
-  selbst nachgeführt hat. Ursache ist, dass `0x26`/`0xA6` im Datenblatt „Write RAM (RED)"
-  heißt und der Treiber es zweckentfremdet; welche Bedeutung bei welchem Update-Modus gilt,
-  steht in keiner der beiden Quellen.
+  selbst nachgeführt hat.
+- **Die Regel für `0x26`/`0xA6` lautet: dort muss stehen, was das Panel tatsächlich zeigt.**
+  `EPD_Clear_R26A6H()` ist nur der **Sonderfall** „vorher alles weiß" und deshalb allein
+  direkt nach dem Löschzyklus richtig. Wer Vollrefresh und Teilrefresh abwechselt, braucht
+  danach mehr: Nach dem Wischen steht das neue Bild auf dem Panel, in `0x26` aber noch der
+  Rest des Löschzyklus — der nächste Teilrefresh kommt dann **grau, egal an welcher Stelle**,
+  und erst der übernächste stimmt. Abhilfe ist, den Bildpuffer selbst nach `0x26`/`0xA6` zu
+  schreiben; die Bausteine dafür exportiert `EPD_Init.h` (`EPD_SetRAMMP/MA/SP/SA`,
+  `EPD_WR_REG`, `EPD_WR_DATA8`), die Adressrechnung ist die aus `EPD_Display()`. Beispiel:
+  `merkeAltesBild()` in `sketches/bedienleiste`. **`0x26` benutzt dieselbe Kodierung wie
+  `0x24` (1 = weiß)** — der Puffer wird unverändert übernommen; am Gerät bestätigt. Der
+  Datenblattname „Write RAM (RED)" führt hier in die Irre.
 
 - **Im Partial-Betrieb nicht zwischendurch neu initialisieren.** `EPD_FastMode1Init()`
   enthält einen `EPD_HW_RESET()`, und ein zurückgesetzter Controller kennt das vorherige

@@ -59,6 +59,24 @@ Elecrows eigenes `examples/5.79_key` macht das in Zeile 36–38 genauso. Im Trei
 kein Kommentar dazu, und das Datenblatt beschreibt den Zusammenhang nicht — der Aufruf
 sieht deshalb aus wie eine überflüssige Zeile, die man beim Abschreiben weglässt.
 
+**Die allgemeine Regel dahinter ist nicht „`0xFF` hineinschreiben".** `EPD_Clear_R26A6H()`
+setzt „vorher **alles weiß**" — das stimmt genau dann, wenn das Panel gerade weiß ist, also
+direkt nach dem Löschzyklus. Steht schon ein Bild darauf, ist es falsch. Verlangt ist
+immer: **`0x26`/`0xA6` muss enthalten, was das Panel tatsächlich zeigt.**
+
+In `sketches/bedienleiste` fiel das auf, weil dort Vollrefresh und Teilrefresh abwechseln:
+Nach dem Wischen stand das Ruhebild auf dem Panel, in `0x26` aber noch der Rest des
+Löschzyklus — und der erste Tastendruck danach kam grau, egal welche Taste, während der
+zweite stimmte. Dasselbe Symptom wie oben, nur eine andere Ursache am selben Register.
+
+Dort schreibt deshalb eine eigene Funktion `merkeAltesBild()` den Bildpuffer nach
+`0x26`/`0xA6` — dieselbe Adressrechnung wie `EPD_Display()`, nur mit `0x26`/`0xA6` statt
+`0x24`/`0xA4`. Am Gerät bestätigt: Danach ist der erste Druck sofort kräftig schwarz.
+
+Nebenbei beantwortet das die Frage, in welcher Kodierung `0x26` gelesen wird: **dieselbe
+wie `0x24`, 1 = weiß.** Der Bildpuffer wird unverändert übernommen und ergibt den richtigen
+Übergang. Der Name „Write RAM (RED)" aus dem Datenblatt führt an dieser Stelle in die Irre.
+
 ### 2. Kein Hardware-Reset zwischen den Schritten
 
 `EPD_FastMode1Init()` enthält einen `EPD_HW_RESET()`. Ein zurückgesetzter Controller kennt

@@ -121,6 +121,23 @@ Vollrefresh den schwarzen Block ein, und das Loslassen müsste ihn per Teilrefre
 wieder wegnehmen — ein großer Schwarz-nach-Weiß-Sprung, das Schlechteste, was man
 Partial geben kann.
 
+**Nach dem Wischen muss `0x26`/`0xA6` nachgetragen werden — `merkeAltesBild()`.** Ohne das
+kam der **erste** Tastendruck nach einem Vollrefresh nur grau heraus, egal welche Taste; ab
+dem zweiten stimmte es. Auf dem Panel steht dann das Ruhebild, in `0x26` aber noch, was
+`EPD_Display_Clear()` dort hinterlassen hat — der erste Teilrefresh rechnet gegen einen
+Ausgangszustand, den es nicht gibt, und treibt die Pixel zu schwach.
+
+`EPD_Clear_R26A6H()` hilft hier **nicht**: Es setzt „vorher alles weiß", was nur direkt
+nach dem Löschzyklus stimmt, und vor dem `EPD_FastUpdate()` des Neuaufbaus lässt es das
+Panel ganz weiß (Kreuztabelle oben). Gebraucht wird nicht „weiß", sondern „genau das, was
+gerade zu sehen ist" — dafür gibt es im Treiber keine Funktion, nur die Bausteine.
+`merkeAltesBild()` schreibt deshalb den Bildpuffer mit der Adressrechnung aus
+`EPD_Display()` nach `0x26`/`0xA6`. Die Funktion steht in der `.ino`, damit die
+Vendor-Dateien unverändert bleiben.
+
+Damit ist nebenbei belegt, dass `0x26` **dieselbe Kodierung wie `0x24`** benutzt (1 = weiß):
+Der Puffer wird unverändert übernommen und ergibt den richtigen Übergang.
+
 ## Layout prüfen ohne Gerät
 
 ```bash

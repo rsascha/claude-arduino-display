@@ -304,6 +304,48 @@ static void panelInit() {
   EPD_FastMode1Init();     // enthaelt den Hardware-Reset
 }
 
+// Schreibt den Puffer in RAM 0x26/0xA6 — das "vorherige Bild", aus dem der
+// Controller beim Teilrefresh seine Waveform je Pixel waehlt.
+//
+// Ohne das kam am Geraet der ERSTE Tastendruck nach einem Vollrefresh nur grau
+// heraus, egal welche Taste; ab dem zweiten stimmte es. Der Grund: Nach dem
+// Wischen steht auf dem Panel das Ruhebild, in 0x26 aber noch, was
+// EPD_Display_Clear() dort hinterlassen hat. Der erste Teilrefresh rechnet dann
+// gegen einen Ausgangszustand, den es nicht gibt, und treibt die Pixel zu
+// schwach. Ab dem zweiten fuehrt der Controller 0x26 selbst nach — deshalb
+// sieht der Fehler nach einem Kontrastproblem des Panels aus und nicht nach
+// einem Zustandsfehler.
+//
+// EPD_Clear_R26A6H() waere das Naheliegende, taugt hier aber nicht: Es setzt
+// 0x26 auf 0xFF, also "vorher alles weiss" — richtig direkt nach dem
+// Loeschzyklus, falsch, sobald das Ruhebild schon steht. Und vor dem
+// EPD_FastUpdate() des Neuaufbaus laesst es das Panel ganz weiss bleiben
+// (Kreuztabelle in CLAUDE.md). Gebraucht wird nicht "weiss", sondern "genau
+// das, was gerade zu sehen ist".
+//
+// Die Adressrechnung ist die aus EPD_Display() (EPD_Init.cpp), nur mit
+// 0x26/0xA6 statt 0x24/0xA4. Sie steht hier und nicht dort, damit die
+// Vendor-Datei unveraendert bleibt.
+static void merkeAltesBild(const uint8_t* img) {
+  uint32_t tempcol = 0, templine = 0;
+
+  EPD_SetRAMMP();
+  EPD_SetRAMMA();
+  EPD_WR_REG(0x26);
+  for (uint32_t i = 0; i < ALLSCREEN_BYTES; i++) {
+    EPD_WR_DATA8(*(img + templine * Source_BYTES * 2 + tempcol));
+    if (++templine >= Gate_BITS) { tempcol++; templine = 0; }
+  }
+
+  EPD_SetRAMSP();
+  EPD_SetRAMSA();
+  EPD_WR_REG(0xA6);
+  for (uint32_t i = 0; i < ALLSCREEN_BYTES; i++) {
+    EPD_WR_DATA8(*(img + templine * Source_BYTES * 2 + tempcol));
+    if (++templine >= Gate_BITS) { tempcol++; templine = 0; }
+  }
+}
+
 static void vollrefresh() {
   panelInit();
   EPD_Display_Clear();
@@ -312,6 +354,10 @@ static void vollrefresh() {
   panelInit();
   EPD_Display(ImageBW);
   EPD_FastUpdate();        // ruhiger Neuaufbau, ohne Clear_R26A6H davor
+
+  // Der Controller weiss jetzt nicht, was er gerade angezeigt hat. Nachtragen,
+  // sonst kommt der naechste Teilrefresh grau.
+  merkeAltesBild(ImageBW);
 }
 
 // ---------------------------------------------------------------------------
