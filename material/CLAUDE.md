@@ -37,6 +37,15 @@ Angaben trennt (`datenblatt`, `treibercode`, `code`, `geprueft`, `ruecksatz`). I
 sind sie ein Auszug der Tabellen weiter unten — die Prosa und die Begründungen stehen
 hier, nicht in den YAML-Dateien.
 
+### Schaltplan — die Instanz über allem hier
+
+`SCHALTPLAN.md` wertet Elecrows **offiziellen Schaltplan** aus (Eagle-Projekt in
+`schaltplan/`, Board-Rev V1.0). Wo unten „aus dem Beispielcode abgelesen" steht, gibt es
+dort inzwischen den Netzplan als Beleg. Erledigt unter anderem: BAT-Polarität, dass IO7 die
+**Masse** des Panels schaltet und nicht die Versorgung, dass es **keinen** Akku-Spannungsteiler
+auf einen ADC-Pin gibt, dass die Tasten 4,7-kΩ-Pull-ups haben und dass der Drehschalter ein
+Quadratur-Encoder ist. `schaltplan/netlist.txt` ist die greppbare Netzliste dazu.
+
 ---
 
 ## 1. Benutzerhandbuch
@@ -245,7 +254,7 @@ Board nicht, nur das Modul.
 | 2 | MENU | `5.79_key.ino:8` |
 | 4, 5, 6 | Drehschalter: 4 = hoch, 5 = Druck, 6 = runter | am Gerät geprüft, 23.08.2026 |
 | 3, 8, 9, 14, 15, 16, 17, 18, 19, 20, 21, 38 | GPIO-Header, 12 Pins | `5.79_GPIO.ino:49` |
-| 7 | Display-Spannung, muss HIGH | alle Beispiele |
+| 7 | Display-Freigabe — schaltet die **Masse** des Panels, muss HIGH | Schaltplan, Netz `LCD_GND` |
 | 10, 13, 39, 40 | TF-Karte: CS, MISO, SCK, MOSI | `5.79_TF.ino:6-9` |
 | 11, 12 | E-Paper MOSI, SCK | `spi.h:7-8` |
 | 35, 36, 37 | Octal-PSRAM, gesperrt | WROOM-1 S. 12 |
@@ -267,12 +276,14 @@ am CH340, nicht am nativen USB des ESP32.
   (die fünf Tasten-GPIOs sind inzwischen am Gerät bestätigt, §4).
 - Die **+0x80-Verschiebung der Slave-Register** (siehe §2).
 - Der **Steckertyp des Akkuanschlusses**. Die Abbildung S. 2 schreibt nur „BAT"; dass es
-  ein SH1.0-2P ist, kommt aus Wiki und Forum (siehe §1).
+  ein SH1.0-2P ist, kommt aus Wiki und Forum (siehe §1). Die **Polarität** dagegen steht
+  inzwischen fest: Pad 1 = Plus, siehe `SCHALTPLAN.md`.
 - Der Wert **`0xDC`** für den Teilrefresh (siehe §2).
 - Die **Waveform-Tabellen des konkreten Panels**. Sie liegen im OTP des Displays; das
   Datenblatt beschreibt nur Format und Suchmechanismus (S. 16–20, §6.7–6.11).
-- Ob der Drehschalter ein **Encoder mit Rastung** ist oder drei getrennte Kontakte. Aus
-  `5.79_key` lässt sich beides lesen. Die drei GPIOs sind am 23.08.2026 verifiziert
-  (4 = hoch, 5 = Druck, 6 = runter, siehe §4) — die *Bauart* dahinter aber nicht: dass
-  jede Drehrichtung genau einen Pin auslöst, schließt einen Quadratur-Encoder nicht aus,
-  dessen zwei Leitungen der Beispielcode nur einzeln abfragt.
+- ~~Ob der Drehschalter ein **Encoder** ist oder drei getrennte Kontakte.~~ **Erledigt:**
+  `K5` ist ein `TM_2024A` mit zwei Phasen gegen gemeinsame Masse (K5.1 → IO4, K5.2 → IO6)
+  plus separatem Tastkontakt (K5.4 → IO5) — also ein **Quadratur-Encoder**. Der
+  Beispielcode fragt die zwei Phasen nur einzeln ab. Die GPIOs sind zusätzlich am
+  23.08.2026 am Gerät verifiziert (4 = hoch, 5 = Druck, 6 = runter, siehe §4); die
+  Netznamen im Plan (`IO4_DOWN`, `IO6_UP`) sind dazu invers.

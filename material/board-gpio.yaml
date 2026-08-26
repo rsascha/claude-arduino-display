@@ -1,18 +1,30 @@
 # GPIO-Belegung des CrowPanel ESP32 5.79" — maschinenlesbare Fassung von
 # material/CLAUDE.md §4.
 #
-# Die Datenblaetter kennen nur das Modul, nicht das Board. Alle Zuordnungen
-# stammen deshalb aus dem Elecrow-Beispielcode; wo sie am Geraet nachgeprueft
-# sind, steht das ausdruecklich dabei.
+# Die Datenblaetter kennen nur das Modul, nicht das Board. Der Elecrow-Schaltplan
+# kennt es: Wo er eine Antwort gibt, steht `schaltplan` — das schlaegt alles aus
+# dem Beispielcode Abgelesene. Ausgewertet in material/SCHALTPLAN.md.
 #
 # `belegt_durch`:
 #   geprueft   = am Geraet betaetigt/gemessen, Datum in `geprueft_am`
+#   schaltplan = aus dem Netzplan des Herstellers (material/schaltplan/)
 #   code       = aus dem Elecrow-Beispielcode abgelesen
 #   datenblatt = ESP32-S3-WROOM-1 Datenblatt
+#   erschlossen = aus dem Plan gerechnet, nicht dort aufgeschrieben
 
 board: 'Elecrow CrowPanel ESP32 5.79" E-Paper HMI'
 modul: ESP32-S3-WROOM-1-N8R8
 handbuch: material/crowpanel-5.79-benutzerhandbuch.pdf
+
+schaltplan:
+  auswertung: material/SCHALTPLAN.md
+  dateien: material/schaltplan/          # Eagle 9.6.2: .sch, .brd, .pdf
+  netzliste: material/schaltplan/netlist.txt
+  revision: V1.0
+  sku: DIS08792E
+  hinweis: >-
+    Fremdmaterial von Elecrow — darf nicht weiterverbreitet werden. Das PDF ist ein
+    Vektorplot ohne Textebene; greppbar ist netlist.txt, erzeugt aus der .sch.
 
 # Ausrichtung, auf die sich alle Positionsangaben unten beziehen.
 ausrichtung:
@@ -29,30 +41,40 @@ bedienelemente:
     element: EXIT
     gpio: 1
     define: EXIT_KEY
+    netz: IO1_EXIT
+    pullup: R28
     belegt_durch: geprueft
     geprueft_am: 2026-08-23
   - position: mitte
     element: Drehschalter, Rad nach oben
     gpio: 4
     define: NEXT_KEY
+    netz: IO4_DOWN          # Netzname im Plan ist invers zur Messung, siehe taster.achtung
+    pullup: R30
     belegt_durch: geprueft
     geprueft_am: 2026-08-23
   - position: mitte
     element: Drehschalter, Rad druecken
     gpio: 5
     define: OK_KEY
+    netz: IO5_CONF
+    pullup: R31
     belegt_durch: geprueft
     geprueft_am: 2026-08-23
   - position: mitte
     element: Drehschalter, Rad nach unten
     gpio: 6
     define: PRV_KEY
+    netz: IO6_UP            # dito
+    pullup: R29
     belegt_durch: geprueft
     geprueft_am: 2026-08-23
   - position: unten
     element: MENU
     gpio: 2
     define: HOME_KEY
+    netz: IO2_MENU
+    pullup: R27
     belegt_durch: geprueft
     geprueft_am: 2026-08-23
 
@@ -60,20 +82,36 @@ taster:
   pinmode: INPUT
   gegen: Masse
   gedrueckt: LOW
-  offen: >-
-    Ob der Drehschalter ein Quadratur-Encoder ist oder drei getrennte Kontakte,
-    ist weiterhin unklar — die GPIOs sind geprueft, die Bauart dahinter nicht.
+  pullup_extern: 4.7 kOhm nach 3V3, alle fuenf Tasten (R27..R31)
+  belegt_durch: schaltplan
+  folge: >-
+    Die Eingaenge flattern nicht — sie liegen im Ruhezustand fest auf HIGH.
+    INPUT_PULLUP schadet nicht, aendert aber nichts. Unerklaerte Tastendruecke
+    kommen von Prellen oder aus der Software, nicht vom offenen Pin.
+  drehschalter:
+    bauteil: K5, TM_2024A
+    beschaltung: K5.1 -> IO4, K5.2 -> IO6, K5.4 -> IO5, K5.3 und K5.5..K5.8 -> GND
+    bauart: >-
+      Zwei Phasen gegen gemeinsame Masse plus separater Tastkontakt — das ist ein
+      Quadratur-Encoder, keine drei getrennten Kontakte. Auswertbar waere damit die
+      echte Drehrichtung statt zweier einzeln gepollter Pins.
+    belegt_durch: schaltplan
+  achtung: >-
+    Die Netznamen im Plan sind vertauscht: IO4 heisst dort IO4_DOWN und IO6 heisst
+    IO6_UP, am Geraet ist 4 = hoch und 6 = runter. Die Messung schlaegt den Netznamen.
 
 # Fest verdrahtet auf der Platine, nicht programmierbar.
 platinentaster:
   - element: BOOT
     gpio: 0
+    bauteil: K1
     wirkung: haelt GPIO 0 auf LOW -> Flash-Modus
-    belegt_durch: code
+    belegt_durch: schaltplan
   - element: RESET
     gpio: null
+    bauteil: K2
     wirkung: zieht EN auf LOW -> Neustart
-    belegt_durch: code
+    belegt_durch: schaltplan
 
 epaper:
   mosi: 11
@@ -82,8 +120,15 @@ epaper:
   dc: 46
   res: 47
   busy: 48
-  belegt_durch: code
-  quelle: examples/5.79_Global_refresh/spi.h:7-12
+  belegt_durch: schaltplan
+  quelle: >-
+    material/schaltplan/netlist.txt, Netze IO11_SPI_MOSI, IO12_SPI_CLK, IO45_CS,
+    IO46_D/C, IO47_RES, IO48_BUSY; identisch in examples/5.79_Global_refresh/spi.h:7-12
+    und im Bestueckungsdruck der Platine.
+  schnittstelle: >-
+    U4.BS liegt fest auf LCD_GND, also 0 — das waehlt am SSD1683 4-Draht-SPI.
+    U4.TSCL/TSDA (externer Temperatursensor-Bus des Controllers) haben nur Pull-ups
+    R25/R26 und gehen an keinen ESP32-Pin; der Bus ist unbenutzt.
   achtung: >-
     CS (45) und DC (46) sind Strapping-Pins (WROOM-1 Datenblatt S. 13, §3.3).
     Im Betrieb unkritisch, aber externe Beschaltung, die beim Einschalten zieht,
@@ -91,25 +136,90 @@ epaper:
 
 stromversorgung:
   - gpio: 7
-    funktion: Display-Spannung, muss in setup() auf HIGH
-    belegt_durch: code
-    achtung: Fehlt digitalWrite(7, HIGH), bleibt das Display dunkel — unabhaengig vom restlichen Code.
+    funktion: Freigabe Display — schaltet die MASSE des Panels, nicht die Versorgung
+    schaltung: IO7 -> R172 (100 kOhm) -> Gate Q9 (2N7002); Q9 verbindet LCD_GND mit GND
+    dauerhaft_versorgt: U4.VCI und U4.VDDIO haengen fest am 3V3-Netz
+    belegt_durch: schaltplan
+    quelle: Netze IO7_LCD_3.3_CTL, N$7, LCD_GND
+    achtung: >-
+      Fehlt digitalWrite(7, HIGH), bleibt das Display dunkel — der Rueckstrompfad fehlt.
+      Wirkung wie ein Versorgungsschalter: bei LOW fliesst nichts, auch nicht durch die
+      Boost-Erzeugung des Panels (Q4, L2, D4..D6, VSH/VSL/VCOM/VDHR/PREVGH/PREVGL).
+    deep_sleep: >-
+      Am Gate von Q9 fehlt ein Pulldown, es haengt nur ueber 100 kOhm an IO7. Geht der Pin
+      im Deep Sleep auf Hi-Z, ist das Gate undefiniert. IO7 ist RTC-faehig (RTC_GPIO7):
+      vor dem Schlafen ausdruecklich LOW setzen und mit gpio_hold_en() halten.
   - gpio: 42
-    funktion: zweite Versorgungsfreigabe, noetig fuer die TF-Karte
-    belegt_durch: code
-    quelle: examples/5.79_TF/5.79_TF.ino:26
+    funktion: Freigabe TF-Karte — dieselbe Schaltung, schaltet TF_GND
+    schaltung: IO42 -> R15 (100 kOhm) -> Gate Q10 (2N7002); Q10 verbindet TF_GND mit GND
+    belegt_durch: schaltplan
+    quelle: Netze IO42_TF_3.3_CTL, N$8, TF_GND
   - gpio: 41
-    funktion: Power-LED
-    belegt_durch: code
-    quelle: examples/5.79_PWR/5.79_PWR.ino:22
+    funktion: Power-LED D1 ueber R16 (1 kOhm)
+    belegt_durch: schaltplan
+    quelle: Netze IO41_LED, N$25
+    hinweis: R17 (zweiter Pfad von 3V3) ist NC — die LED leuchtet nur, wenn IO41 HIGH ist.
+
+# Versorgungspfad des Boards. Vollstaendig in material/SCHALTPLAN.md.
+versorgung_board:
+  rail: 3V3, erzeugt von U2 (RYCHIP RY3420, synchroner Step-Down, 1,2 MHz, max. 2 A)
+  feedback: R13 45,3 kOhm / R14 10 kOhm an FB, L1 5,6 uH
+  eingang: VIN = VBUS (ueber D2) oder BAT (ueber Q3/D3)
+  pfadumschaltung: >-
+    Q3 (PMOS) trennt den Akku, sobald USB anliegt: sein Gate haengt am Teiler
+    R10/R11 an VBUS. Ohne USB zieht R11 das Gate auf Masse, der Akku speist VIN.
+  belegt_durch: schaltplan
+  akkufreundlich: >-
+    CH340 (U1), Lader (U6) und der Gate-Teiler R10/R11 haengen an VBUS, nicht am Akku.
+    Ohne USB zieht dort nichts.
+  deep_sleep_strom: >-
+    Nirgends dokumentiert. Modul 7-8 uA (WROOM-1 S. 18), SSD1683 1-5 uA je Controller
+    (S. 44) bzw. ~0 bei IO7 LOW. Offener Posten ist der Ruhestrom von U2 — muss gemessen
+    werden, daran haengt Wochen oder Tage Laufzeit.
+
+akku:
+  stecker: B1, SH1.0-2P (1,0 mm Raster), 3,7 V Li-Ion
+  polaritaet:
+    pad_1: BAT (Plus)
+    pad_2: GND (Minus)
+    pads_3_4: GND, Befestigungslaschen
+    aufdruck: >-
+      + und - stehen im Bestueckungsdruck (Layer 21) ueber den Pads. Das Plus-Pad ist
+      das der USB-C-Buchse naeher liegende; Blick auf die Bestueckungsseite.
+    belegt_durch: schaltplan
+    achtung: >-
+      Die Verwechslungsgefahr sitzt im Akkukabel, nicht auf der Platine — handelsuebliche
+      SH1.0-Kabel sind teils vertauscht. Vor dem ersten Anstecken messen.
+  lader: U6 (4054-Typ), PROG ueber R12 = 2 kOhm
+  ladestrom: ca. 500 mA (LTC4054/TP4054-Formel) bzw. 600 mA (TP4056)
+  ladestrom_belegt_durch: erschlossen    # U6 traegt im Plan keinen Herstellernamen
+  tiefentladeschutz: >-
+    Nicht auf der Platine. Kein DW01 o. ae. bestueckt; der 4054 schuetzt nur beim Laden.
+    Der Akku muss seine eigene Schutzelektronik mitbringen.
+  spannungsmessung:
+    vorhanden: false
+    netz: 'BAT: B1.B+, C5.2, C6.2, D3.A, P5.P$1, Q3.D, U6.BAT'
+    belegt_durch: schaltplan
+    befund: >-
+      Kein GPIO, kein Spannungsteiler, kein ADC-Pin am Akkunetz. Der Ladestand ist ohne
+      Zusatzbeschaltung nicht messbar.
+    nachruesten: >-
+      Teiler 2 x 1 MOhm von BAT nach GND, Mittelabgriff auf IO8 (ADC1_CH7). Bei 4,2 V
+      sind das 2,1 uA Dauerlast und 2,1 V am Pin. Nur ADC1 nehmen — ADC2 ist blockiert,
+      solange WLAN laeuft.
+    abgriff: >-
+      NICHT am Testpad P5: alle 49 P*-Pads liegen im Layout gespiegelt, sitzen also auf
+      der Displayseite und sind unter dem Panel nicht erreichbar. Erreichbar sind Pad 1
+      von B1 selbst sowie C5/C6.
 
 tf_karte:
   cs: 10
   miso: 13
   sck: 39
   mosi: 40
-  belegt_durch: code
-  quelle: examples/5.79_TF/5.79_TF.ino:6-9
+  belegt_durch: schaltplan
+  quelle: Netze IO10_SPI_CS, IO13_SPI_MISO, IO39_SPI_CLK, IO40_SPI_MOSI; J1
+  hinweis: Freigabe ueber IO42, siehe stromversorgung.
 
 uart:
   tx: 43
@@ -124,13 +234,28 @@ uart:
 
 # Die einzigen frei verfuegbaren Pins.
 gpio_header:
+  bauteil: U5, 2x10, 2,54 mm
   pins: [3, 8, 9, 14, 15, 16, 17, 18, 19, 20, 21, 38]
-  belegt_durch: code
-  quelle: examples/5.79_GPIO/5.79_GPIO.ino:49
+  belegt_durch: schaltplan
+  quelle: Netze IO3, IO8, IO9, IO14..IO21, IO38; U5.P$1..P$20
+  # Reihenfolge laengs des Steckers, Paare uebereinander. Jeder Pin ist bedruckt.
+  reihe_a: [IO3, IO9, IO15, IO17, IO19, IO21, GND, GND, GND, GND]
+  reihe_b: [IO8, IO14, IO16, IO18, IO20, IO38, 3V3, 3V3, 3V3, 3V3]
+  versorgung: 3V3 an U5.P$11..P$14, GND an U5.P$7..P$10 — je vier Pins
+  belastbarkeit: >-
+    Nirgends genannt — nicht im Handbuch, nicht im Wiki, keine Notiz im Plan. Obergrenze
+    ergibt sich aus U2 (2 A) abzueglich Board und Panel; WLAN-Spitzen 355 mA. Erschlossen.
+  adc:
+    adc1_mit_wlan_nutzbar: {3: ADC1_CH2, 8: ADC1_CH7, 9: ADC1_CH8}
+    adc2_mit_wlan_blockiert: {14: ADC2_CH3, 15: ADC2_CH4, 16: ADC2_CH5, 17: ADC2_CH6, 18: ADC2_CH7, 19: ADC2_CH8, 20: ADC2_CH9}
+    ohne_adc: [21, 38]
+    belegt_durch: datenblatt
   hinweis: >-
-    GPIO 3 ist Strapping-Pin (JTAG-Signalquelle). GPIO 19/20 sind am Modul
-    USB D-/D+, hier aber am Header — die USB-Buchse haengt am CH340, nicht am
-    nativen USB des ESP32.
+    GPIO 3 ist Strapping-Pin (JTAG-Signalquelle) und im Plan voellig unbeschaltet — kein
+    Pull-Widerstand. Fuer einen Taster gegen Masse unkritisch, IO9 ist aber die ruhigere
+    Wahl; dann bleibt IO8 fuer die Akkumessung frei. GPIO 19/20 sind am Modul USB D-/D+,
+    hier aber nur am Header: die USB-Buchse J2 geht ueber R2/R3 (22 Ohm) ausschliesslich
+    an den CH340. Der Verdacht, sie haengen an D-/D+, ist damit ausgeraeumt.
 
 gesperrt:
   pins: [35, 36, 37]
@@ -143,3 +268,12 @@ nicht_vorhanden:
   pins_von: 22
   pins_bis: 34
   hinweis: Das Modul fuehrt 41 Pins heraus; GPIO 22-34 gibt es nicht.
+
+# Was auf dem Board NICHT bestueckt ist — geprueft an der Stueckliste des Plans.
+fehlt:
+  rtc: >-
+    Kein RTC-Baustein, kein Knopfzellenhalter, kein 32,768-kHz-Quarz. Bestueckt sind nur
+    U1 CH340C, U2 RY3420, U3 ESP32-S3-WROOM-1, U4 FPC-Buchse 24-polig, U5 Header,
+    U6 Lader. Bleibt: interner RTC am RC-Oszillator (driftet) oder Zeit aus dem Netz.
+  akku_adc: siehe akku.spannungsmessung
+  belegt_durch: schaltplan
