@@ -51,23 +51,52 @@ const int  tastePin[T_ANZAHL]  = { PIN_EXIT, PIN_RAD_HOCH, PIN_RAD_OK, PIN_RAD_R
 const char* tasteName[T_ANZAHL] = { "EXIT", "Rad hoch", "Rad druecken", "Rad runter", "MENU" };
 
 // --- Lage der Laschen -------------------------------------------------------
-// Am Geraet abgelesen: oberer Taster 60..70, Drehschalter
-// 110..150, unterer Taster 200..210. Die beiden aeusseren Taster sind mit 11 px
-// zu flach fuer einen lesbaren Buchstaben — ihre Laschen sind deshalb 32 px hoch
-// und auf der Tastermitte zentriert. Der Drehschalter ist von sich aus hoch
-// genug, seine Lasche behaelt die abgelesenen Kanten.
+// Am Geraet abgelesen: oberer Taster 60..70, Drehschalter 110..150, unterer
+// Taster 200..210. KEINE der drei Laschen hat genau die Hoehe ihres Elements —
+// entscheidend ist, dass sie auf dessen MITTE sitzt, und die Hoehe richtet sich
+// danach, was hineinpassen muss:
+//
+//   E und M   Die Taster sind nur 11 px hoch, ein Buchstabe in Groesse 24
+//             braucht 24 px. Also 32 px, zentriert auf 65 bzw. 205.
+//   Rad       Das Rad ist 41 px hoch; mit Pfeil, OK und Pfeil darin stiessen
+//             die Pfeilspitzen an den Umriss und aneinander. Also 53 px,
+//             zentriert auf 130: 6 px Luft nach aussen, 4 px zwischen den drei
+//             Inhalten.
 const int EXIT_MITTE = 65;
 const int MENU_MITTE = 205;
 const int KLEIN_H    = 32;
 
-const int RAD_Y0 = 110, RAD_Y1 = 150;
+const int RAD_Y0 = 104, RAD_Y1 = 156;   // gezeichnete Lasche; das Rad selbst ist 110..150
 const int TAB_W  = 46;    // Breite der Laschen, x = 0 .. TAB_W-1
 const int ECKE   = 4;     // abgerundete Ecken an der Innenseite
 
-// Die drei Zonen der Drehschalter-Lasche. Gedreht wird oben/unten, gedrueckt in
-// der Mitte — invertiert wird nur die betroffene Zone, nicht die ganze Lasche.
-const int RAD_ZONE1 = 122;   // erste Zeile der Mittelzone
-const int RAD_ZONE2 = 139;   // erste Zeile der unteren Zone
+// Inhalt der Radlasche, auf Mitte 130 ausgerichtet und unabhaengig von RAD_Y0/Y1:
+// Wer die Lasche hoeher oder flacher macht, verschiebt damit nur den Rand.
+//
+//   Pfeil oben  110..117
+//      Luecke   118..121
+//   OK          122..137
+//      Luecke   138..141
+//   Pfeil unten 142..149
+//
+// Die 4 px Luecken sind nicht Kosmetik. Vorher lagen die drei Inhalte ohne
+// Abstand aneinander (zwischen OK und dem unteren Pfeil sogar 0 px). Passiv
+// faellt das nicht auf, weil alles dieselbe Farbe hat — invertiert schon:
+// Die Zonengrenze lag genau auf der Inhaltskante, der weisse Pfeil stiess mit
+// seiner breitesten Zeile an die weisse Flaeche daneben und las sich als KERBE
+// im Balken statt als Pfeil. Dasselbe gespiegelt beim unteren, und in der
+// OK-Zone wirkten beide schwarzen Pfeile abgeschnitten.
+const int RAD_PFEIL_OBEN_Y  = 110;   // Dreieck 8 px hoch, also 110..117
+const int RAD_OK_Y          = 122;   // Text Groesse 16, also 122..137
+const int RAD_PFEIL_UNTEN_Y = 142;   // Dreieck 8 px hoch, also 142..149
+const int RAD_PFEIL_B       = 15;
+const int RAD_PFEIL_H       = 8;
+
+// Die drei Zonen. Gedreht wird oben/unten, gedrueckt in der Mitte — invertiert
+// wird nur die betroffene Zone, nicht die ganze Lasche. Jede Zone reicht 2 px
+// ueber ihren Inhalt hinaus, damit der invertierte Inhalt ringsum Rand hat.
+const int RAD_ZONE1 = 120;   // erste Zeile der Mittelzone (OK 122..137 + 2)
+const int RAD_ZONE2 = 140;   // erste Zeile der unteren Zone (Pfeil 142..149 + 2)
 
 // --- Textspalte rechts der Laschen ------------------------------------------
 const int TEXT_X = 120;
@@ -172,9 +201,11 @@ static void zeichneRadLasche(Taste aktiv) {
       fillRect(0, y, TAB_W - 3 - eckenversatz(y, RAD_Y0, RAD_Y1), y, BLACK);
 
   const int xm = (TAB_W - 4) / 2;
-  dreieck(xm, RAD_Y0 + 4, 15, 8, true,  aktiv == T_HOCH   ? WHITE : BLACK);
-  EPD_ShowString(xm - 8, RAD_ZONE1 + 1, "OK", 16, aktiv == T_OK ? WHITE : BLACK);
-  dreieck(xm, RAD_Y1 - 11, 15, 8, false, aktiv == T_RUNTER ? WHITE : BLACK);
+  dreieck(xm, RAD_PFEIL_OBEN_Y,  RAD_PFEIL_B, RAD_PFEIL_H, true,
+          aktiv == T_HOCH   ? WHITE : BLACK);
+  EPD_ShowString(xm - 8, RAD_OK_Y, "OK", 16, aktiv == T_OK ? WHITE : BLACK);
+  dreieck(xm, RAD_PFEIL_UNTEN_Y, RAD_PFEIL_B, RAD_PFEIL_H, false,
+          aktiv == T_RUNTER ? WHITE : BLACK);
 }
 
 // ---------------------------------------------------------------------------

@@ -343,11 +343,12 @@ mit ihren Mitten 65 und 205 symmetrisch zur Bildmitte, das hätte man annehmen k
 Mitte des Drehschalters liegt aber bei 130 und damit sechs Pixel darüber, und die Höhen der
 drei Elemente stehen in keinem Datenblatt. Beides fällt nur beim Messen auf.
 
-*Die äußeren Laschen sind größer als ihre Taster.* Die beiden Taster sind nur 11 px hoch;
-ein Buchstabe in Größe 24 braucht 24 px, und kleiner ist auf dem Panel nicht mehr sicher
-lesbar. Die Laschen sind deshalb 32 px hoch und auf der **Mitte** des Tasters zentriert —
-die Mitte ist die Information, auf die es beim Zuordnen ankommt. Die Lasche des
-Drehschalters behält dagegen die abgelesenen Kanten: Das Rad ist von sich aus hoch genug.
+*Keine Lasche hat die Höhe ihres Elements.* Sie sitzt auf dessen **Mitte** — das ist die
+Information, auf die es beim Zuordnen ankommt; die Höhe richtet sich danach, was
+hineinpassen muss. Die beiden Taster sind nur 11 px hoch, ein Buchstabe in Größe 24
+braucht 24 px, und kleiner ist auf dem Panel nicht mehr sicher lesbar: also 32 px. Das Rad
+ist 41 px hoch, seine Lasche 53 — Pfeil, `OK` und Pfeil brauchen zusammen mehr, wenn sie
+Abstand behalten sollen.
 
 *Drei Funktionen, eine Lasche.* Der Drehschalter ist ein einziges Bedienelement mit drei
 Kontakten (GPIO 4 hoch, 5 drücken, 6 runter). Er bekommt deshalb **eine** Lasche, die in
@@ -355,6 +356,15 @@ drei Zonen geteilt ist — Pfeil hoch, `OK`, Pfeil runter — und beim Bedienen 
 die betroffene Zone. Drei getrennte Laschen hätten drei Bedienelemente vorgetäuscht, wo
 nur eines ist. Die Pfeile sind aus Pixeln gefüllt: Die Font-Arrays decken ASCII 32..126 ab,
 ein Pfeilzeichen ist nicht dabei.
+
+*Zwischen den drei Zonen liegen 4 px, und das ist ein Bugfix, kein Geschmack.* Zuerst
+lagen Pfeil, `OK` und Pfeil ohne Abstand aneinander. Passiv sah das gut aus — invertiert
+nicht: Die Zonengrenze lag genau auf der Inhaltskante, und der weiße Pfeil stieß mit seiner
+breitesten Zeile an die weiße Fläche daneben. Er las sich dadurch als **Kerbe** im
+schwarzen Balken statt als Pfeil, und in der `OK`-Zone wirkten die beiden schwarzen Pfeile
+abgeschnitten. Aufgefallen ist das erst, als alle vier Zustände nebeneinander gerendert
+wurden — einzeln und in Originalgröße sah jeder für sich plausibel aus. Der Simulator kann
+das, ohne zu flashen; der Weg steht in `sketches/bedienleiste/CLAUDE.md`.
 
 *Weiß auf Schwarz kostet nichts.* Für die gedrückte Lasche genügt `EPD_ShowString(...,
 WHITE)`. Das funktioniert, weil `EPD_ShowChar()` die ganze Zelle malt und für den
