@@ -195,6 +195,9 @@ void panelFenster(int x0, int y0, int x1, int y1) {
   // rueckgaengig macht, ein Fenster ueber das ganze Bild aber nicht. Beides ist
   // am Geraet belegt; eine Erklaerung dafuer gibt es noch nicht. Solange sie
   // fehlt, ruft bedienleiste.ino nur das volle Fenster auf.
+  //
+  // Belege, widerlegte Hypothesen und die naechsten Pruefschritte:
+  // features/TODO/ram-fenster.md
 }
 
 // ---------------------------------------------------------------------------

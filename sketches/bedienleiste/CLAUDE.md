@@ -102,9 +102,8 @@ jedem Moduswechsel neu — hier wird der Wechsel stattdessen ganz vermieden.
 Zwei Erklärungsversuche sind widerlegt: ein veraltetes `0x26` (Nachführen half nicht) und
 „ein zweiter Teilrefresh stört" (mit vollem Fenster stört er nicht). Solange die Erklärung
 fehlt, ruft die `.ino` nur das volle Fenster auf — die 17-fache Ersparnis des kleinen
-Fensters liegt also noch auf der Straße. Nächster Ansatz wäre zu klären, ob `0x44`/`0x45`
-im **kaskadierten** Betrieb den Update-Bereich überhaupt begrenzen oder nur den
-Schreibzugriff steuern.
+Fensters liegt also noch auf der Straße. Belege, widerlegte Hypothesen und die nächsten
+Prüfschritte: [`features/TODO/ram-fenster.md`](../../features/TODO/ram-fenster.md).
 
 Die Registerfolge selbst ist erarbeitet und dokumentiert (`panel.cpp`): `0x11 = 0x05`,
 `0x44`/`0x45`, `0x4E`/`0x4F` für den Master; `0x91 = 0x04`, `0xC4`/`0xC5`, `0xCE`/`0xCF`
@@ -115,7 +114,8 @@ ist aus `EPD_Init.cpp` abgelesen und am Gerät bestätigt.
 **Der zweite Hebel liegt woanders:** `spi.cpp` bit-bangt das SPI (drei `digitalWrite()` je
 Bit, CS je Byte) — ein Vollbild sind rund 650.000 `digitalWrite`-Aufrufe, bevor das Panel
 überhaupt anfängt. Der SSD1683 kann laut Datenblatt 20 MHz Hardware-SPI. Das wirkt auf
-*jedes* Update, unabhängig von der Fenstergröße.
+*jedes* Update, unabhängig von der Fenstergröße. Eigener Punkt:
+[`features/TODO/hardware-spi.md`](../../features/TODO/hardware-spi.md).
 
 ## Layout prüfen ohne Gerät
 

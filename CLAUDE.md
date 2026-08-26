@@ -259,6 +259,8 @@ material/          Handbuch + Datenblätter (PDF + .txt), Fotos (JPEG; *.HEIC is
                    → `material/CLAUDE.md` fasst die Datenblätter mit Seitenangaben zusammen
                    → `.txt` je PDF zum Durchsuchen, `make material-txt` erzeugt sie neu
                    → `*.yaml`: Kommando- und GPIO-Tabellen maschinenlesbar
+features/TODO/     Ideen mit Substanz, die auf später warten — je eine `.md`
+                   → was das Problem ist, was belegt ist, was noch zu messen wäre
 tools/simulator/    Host-Build eines Sketches → PNG (`make sim`), ohne Gerät
                    → übersetzt alle `.cpp` des Sketch-Ordners (`SIM_SRCS`), nicht nur die `.ino`
 Makefile
