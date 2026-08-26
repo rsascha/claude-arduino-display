@@ -379,7 +379,15 @@ Loslassen. Die Bedingungen dafür stehen in [`PROGRESS_BAR.md`](PROGRESS_BAR.md)
 Teilbilder fällig — und traf damit mitten ins Bedienen: Der Löschzyklus lässt das Panel
 mehrere Sekunden **weiß** stehen, und wer gerade draufschaut, hält das für einen Absturz.
 Jetzt macht der erste Druck auf **EXIT** aus dem `E` ein `R`, und erst der Druck auf `R`
-wischt. Jede andere Taste nimmt das `R` zurück. Zwei Schritte deshalb, weil ein
+wischt. Jede andere Taste bricht ab, und nach fünf Sekunden ohne Tastendruck verfällt das
+`R` von selbst — ein Bedienelement, das in einem vergessenen Sonderzustand steht, löst beim
+nächsten beiläufigen Druck etwas aus, das man nicht wollte.
+
+Das `R` wird dabei **invertiert** gezeichnet und bleibt es, auch wenn die Taste längst
+losgelassen ist: Es ist ein Zustand, kein Tastendruck. Nur den Buchstaben zu tauschen war zu
+leise — `E` und `R` sind beide schmal, stehen an derselben Stelle und in derselben Größe,
+und die Lasche wurde beim Loslassen wieder weiß. Der Wechsel ging im Blick auf das ganze
+Panel unter. Zwei Schritte deshalb, weil ein
 Bedienelement, das man nur antippen will, um zu sehen ob es reagiert, nicht nebenbei das
 halbe Display für Sekunden ausknipsen soll. Gewischt wird dabei das **Ruhebild**, nicht die
 gedrückte Lasche — sonst müsste das Loslassen den großen schwarzen Block per Teilrefresh

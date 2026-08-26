@@ -14,15 +14,30 @@ make flash SKETCH=sketches/bedienleiste
 
 | Eingabe | Wirkung |
 |---|---|
-| EXIT (GPIO 1) | Lasche schwarz; der Buchstabe wechselt `E` → `R` |
-| **R** drücken | Vollrefresh: Panel wird gewischt, danach steht das Ruhebild |
+| EXIT (GPIO 1) | Lasche wird **schwarz und bleibt es**, der Buchstabe wechselt `E` → `R` |
+| **R** drücken | Vollrefresh: Panel wird gewischt, danach steht wieder das `E` |
 | Rad hoch / drücken / runter (GPIO 4/5/6) | die betroffene Zone der Radlasche wird schwarz |
 | MENU (GPIO 2) | Lasche schwarz |
-| jede Taste außer EXIT | nimmt ein scharfes `R` wieder auf `E` zurück |
+| jede Taste außer EXIT | bricht ein scharfes `R` ab |
+| 5 s ohne Tastendruck | `R` verfällt von selbst (`SCHARF_MS`), Log: `R verfallen` |
 
 Der Vollrefresh braucht zwei Drücker, weil er das Panel mehrere Sekunden weiß stehen
 lässt. Wer nur antippen will, ob die Lasche reagiert, soll dabei nicht das halbe
 Display ausknipsen.
+
+**Das scharfe `R` ist ein Zustand, kein Tastendruck** — die Lasche bleibt deshalb
+invertiert, auch wenn die Taste längst losgelassen ist. Nur den Buchstaben zu tauschen war
+zu leise: `E` und `R` sind beide schmal, stehen an derselben Stelle und in derselben Größe,
+und die Lasche wurde beim Loslassen wieder weiß. Der Wechsel ging im Blick auf das ganze
+Panel unter. Eine schwarze Lasche sieht man aus dem Augenwinkel.
+
+**Die Verfallszeit zählt erst, wenn keine Taste mehr gedrückt ist.** Wer EXIT festhält, ist
+noch am Bedienen; ihm den Zustand unter der Hand wegzunehmen wäre das Gegenteil dessen, was
+die Frist bezwecken soll. Der Sinn der Frist: Ein Bedienelement, das dauerhaft in einem
+Sonderzustand steht, den man vergessen hat, löst beim nächsten beiläufigen Druck etwas aus,
+das man nicht wollte. Preis ist ein zusätzlicher Teilrefresh je scharf gemachtem, aber nicht
+genutztem `R` — bei einem Testsketch ohne Belang, in einem Dauerbetrieb eine Stelle zum
+Nachdenken.
 
 ## Was man hier nicht verstellen sollte, ohne es zu wissen
 

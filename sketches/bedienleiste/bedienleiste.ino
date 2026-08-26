@@ -101,6 +101,9 @@ const int RAD_ZONE2 = 140;   // erste Zeile der unteren Zone (Pfeil 142..149 + 2
 // --- Textspalte rechts der Laschen ------------------------------------------
 const int TEXT_X = 120;
 
+// So lange bleibt das "R" scharf, danach faellt es von selbst auf "E" zurueck.
+const unsigned long SCHARF_MS = 5000;
+
 // Der Vollrefresh laeuft nicht nach Zaehler, sondern auf Zuruf: Loslassen von
 // EXIT wischt das Panel durch. E-Paper baut im Teilrefresh Schatten auf, und
 // dagegen hilft nur der volle Loeschzyklus — der laesst das Panel aber mehrere
@@ -221,14 +224,24 @@ static int teilbilder = 0;
 // Der Vollrefresh braucht zwei Druecker: der erste auf EXIT macht aus dem "E"
 // ein "R", erst der zweite wischt. Ein Vollrefresh laesst das Panel mehrere
 // Sekunden weiss stehen — er soll niemanden ueberraschen, der nur schauen
-// wollte, ob die Lasche reagiert. Jede andere Taste nimmt das "R" zurueck.
-static bool refreshScharf = false;
+// wollte, ob die Lasche reagiert. Jede andere Taste nimmt das "R" zurueck, und
+// nach SCHARF_MS verfaellt es von selbst: Ein Bedienelement, das dauerhaft in
+// einem Sonderzustand steht, den man vergessen hat, loest beim naechsten
+// beilaeufigen Druck etwas aus, das man nicht wollte.
+static bool          refreshScharf = false;
+static unsigned long scharfSeit    = 0;
 
 static void render(Taste aktiv) {
   Paint_NewImage(ImageBW, EPD_W, EPD_H, DISPLAY_ROTATION, WHITE);
   Paint_Clear(WHITE);
 
-  zeichneBuchstabenLasche(EXIT_MITTE, refreshScharf ? "R" : "E", aktiv == T_EXIT);
+  // Das scharfe "R" wird invertiert dargestellt, auch wenn die Taste laengst
+  // losgelassen ist: Es ist ein ZUSTAND, kein Tastendruck. Nur den Buchstaben zu
+  // tauschen war zu leise — E und R sind beide schmal und stehen an derselben
+  // Stelle, der Wechsel ging im Blick auf das ganze Panel unter. Eine schwarze
+  // Lasche sieht man aus dem Augenwinkel.
+  zeichneBuchstabenLasche(EXIT_MITTE, refreshScharf ? "R" : "E",
+                          aktiv == T_EXIT || refreshScharf);
   zeichneRadLasche(aktiv);
   zeichneBuchstabenLasche(MENU_MITTE, "M", aktiv == T_MENU);
 
@@ -251,7 +264,7 @@ static void render(Taste aktiv) {
   EPD_ShowString(TEXT_X, 208, zaehlzeile, 16, BLACK);
 
   EPD_ShowString(TEXT_X, 232,
-                 refreshScharf ? "R druecken wischt das Panel durch - jede andere Taste bricht ab"
+                 refreshScharf ? "R wischt das Panel durch - andere Taste bricht ab, nach 5 s verfaellt es"
                                : "E einmal druecken macht daraus R - R loest den Vollrefresh aus",
                  16, BLACK);
 
@@ -337,7 +350,23 @@ void loop() {
   static Taste angezeigt = T_KEINE;
 
   const Taste jetzt = gedrueckteTaste();
-  if (jetzt == angezeigt) { delay(20); return; }
+
+  if (jetzt == angezeigt) {
+    // Nichts Neues an den Tasten — hier laeuft nur die Verfallszeit des "R".
+    // Sie zaehlt erst, wenn keine Taste mehr gedrueckt ist: Wer EXIT festhaelt,
+    // ist noch am Bedienen, und ihm den Zustand unter der Hand wegzunehmen waere
+    // das Gegenteil dessen, was die Frist bezwecken soll.
+    if (refreshScharf && jetzt == T_KEINE && millis() - scharfSeit >= SCHARF_MS) {
+      refreshScharf = false;
+      Serial.println("R verfallen");
+      teilbilder++;
+      render(angezeigt);
+      EPD_Display(ImageBW);
+      EPD_PartUpdate();
+    }
+    delay(20);
+    return;
+  }
 
   bool wischen = false;
 
@@ -349,6 +378,7 @@ void loop() {
       // Erster Druck macht scharf, zweiter wischt.
       wischen       = refreshScharf;
       refreshScharf = !refreshScharf;
+      scharfSeit    = millis();
     } else {
       refreshScharf = false;      // jede andere Taste nimmt das "R" zurueck
     }
