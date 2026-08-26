@@ -157,6 +157,7 @@ Eigene Sketches in `sketches/`. Kompilieren und flashen mit
 | [`ha_wechsel`](sketches/ha_wechsel) | Temperaturen und Wetter im Wechsel, EXIT und MENU bedienbar | ja |
 | [`ha_umschalten`](sketches/ha_umschalten) | zwei Sensoren im Wechsel; Testsketch für die Refresh-Modi | ja |
 | [`progress_bar`](sketches/progress_bar) | Fortschrittsanzeige, EXIT startet neu — Partial-Refresh | – |
+| [`bedienleiste`](sketches/bedienleiste) | die drei Bedienelemente als Laschen am linken Rand, reagieren auf Druck | – |
 
 **`hello_epaper`** — der Startpunkt. Text in mehreren Größen, ein Rahmen, ein paar Formen.
 Zeigt, warum der Puffer 27200 Byte groß ist und was `digitalWrite(7, HIGH)` damit zu tun
@@ -326,6 +327,77 @@ Gegentest zu `ha_umschalten`: Partial taugt nichts für einen Vollbildwechsel, w
 hier, wo sich pro Schritt nur ein Segment ändert. Der Sketch zeigt die zwei Bedingungen,
 ohne die das nicht funktioniert — `EPD_Clear_R26A6H()` vor dem ersten Partial-Update und
 kein Hardware-Reset zwischendurch. Ausführlich in **[`PROGRESS_BAR.md`](PROGRESS_BAR.md)**.
+
+**`bedienleiste`** — die drei Bedienelemente an der linken Gehäusekante bekommen ein
+Gegenstück auf dem Panel: oben eine Lasche mit **E** für EXIT, unten eine mit **M** für
+MENU, dazwischen die des Drehschalters. Wer drückt, sieht seine Lasche schwarz werden.
+Damit ist ohne Serial-Monitor am Gerät ablesbar, welches Element wo sitzt und welchen GPIO
+es zieht.
+
+*Die y-Positionen sind gemessen, nicht gerechnet.* 60–70 für EXIT, 110–150 für den
+Drehschalter, 200–210 für MENU. Abgelesen wurden sie mit einem Wegwerf-Sketch, der an
+beiden langen Kanten ein Maßband von 0 bis 271 zeichnet — Striche alle 10 px, Beschriftung
+alle 50 px. Er hat seinen Zweck erfüllt und ist wieder gelöscht; die Zahlen stehen jetzt
+hier und in `CLAUDE.md`. EXIT und MENU liegen
+mit ihren Mitten 65 und 205 symmetrisch zur Bildmitte, das hätte man annehmen können. Die
+Mitte des Drehschalters liegt aber bei 130 und damit sechs Pixel darüber, und die Höhen der
+drei Elemente stehen in keinem Datenblatt. Beides fällt nur beim Messen auf.
+
+*Die äußeren Laschen sind größer als ihre Taster.* Die beiden Taster sind nur 11 px hoch;
+ein Buchstabe in Größe 24 braucht 24 px, und kleiner ist auf dem Panel nicht mehr sicher
+lesbar. Die Laschen sind deshalb 32 px hoch und auf der **Mitte** des Tasters zentriert —
+die Mitte ist die Information, auf die es beim Zuordnen ankommt. Die Lasche des
+Drehschalters behält dagegen die abgelesenen Kanten: Das Rad ist von sich aus hoch genug.
+
+*Drei Funktionen, eine Lasche.* Der Drehschalter ist ein einziges Bedienelement mit drei
+Kontakten (GPIO 4 hoch, 5 drücken, 6 runter). Er bekommt deshalb **eine** Lasche, die in
+drei Zonen geteilt ist — Pfeil hoch, `OK`, Pfeil runter — und beim Bedienen färbt sich nur
+die betroffene Zone. Drei getrennte Laschen hätten drei Bedienelemente vorgetäuscht, wo
+nur eines ist. Die Pfeile sind aus Pixeln gefüllt: Die Font-Arrays decken ASCII 32..126 ab,
+ein Pfeilzeichen ist nicht dabei.
+
+*Weiß auf Schwarz kostet nichts.* Für die gedrückte Lasche genügt `EPD_ShowString(...,
+WHITE)`. Das funktioniert, weil `EPD_ShowChar()` die ganze Zelle malt und für den
+Hintergrund `!color` setzt — bei `WHITE` also Schwarz. Dieselbe Eigenschaft, die in
+`ha_kacheln` das Komma ausradiert hat, ist hier genau das Gewünschte.
+
+*Refresh.* Pro Tastendruck zwei Partial-Updates — eines beim Drücken, eines beim
+Loslassen. Die Bedingungen dafür stehen in [`PROGRESS_BAR.md`](PROGRESS_BAR.md):
+`EPD_Clear_R26A6H()` vor dem ersten Partial-Update und kein Hardware-Reset zwischendurch.
+
+*Der Vollrefresh läuft auf Zuruf, und zwar in zwei Schritten.* Erst war er alle 20
+Teilbilder fällig — und traf damit mitten ins Bedienen: Der Löschzyklus lässt das Panel
+mehrere Sekunden **weiß** stehen, und wer gerade draufschaut, hält das für einen Absturz.
+Jetzt macht der erste Druck auf **EXIT** aus dem `E` ein `R`, und erst der Druck auf `R`
+wischt. Jede andere Taste nimmt das `R` zurück. Zwei Schritte deshalb, weil ein
+Bedienelement, das man nur antippen will, um zu sehen ob es reagiert, nicht nebenbei das
+halbe Display für Sekunden ausknipsen soll. Gewischt wird dabei das **Ruhebild**, nicht die
+gedrückte Lasche — sonst müsste das Loslassen den großen schwarzen Block per Teilrefresh
+wieder wegnehmen, und genau das kann Partial am schlechtesten. Wie viele Teilbilder seit
+dem letzten Wischen aufgelaufen sind, steht in der Fußzeile.
+
+*Der Neuaufbau nach dem Löschzyklus ist am Gerät ermittelt, nicht hergeleitet.* Drei
+Anläufe, drei verschiedene Fehlerbilder: einmal blieb das Panel komplett weiß, einmal kam
+das Bild blass, einmal fehlten Teile des Textes. Der Grund ist, dass RAM `0x26`/`0xA6` im
+Datenblatt „Write RAM (RED)" heißt, im Elecrow-Treiber aber als *vorheriges Bild* für den
+Teilrefresh dient — und nirgends steht, was davon bei einem vollen Update gilt. Statt weiter
+zu raten wurden fünf Rezepte nacheinander auf das Panel geschickt und angesehen, wie es
+`ha_umschalten` schon für die drei Refresh-Modi gemacht hat:
+
+| Neuaufbau | ohne `EPD_Clear_R26A6H()` | mit `EPD_Clear_R26A6H()` |
+|---|---|---|
+| `EPD_Update()` (0xF7) | Text unvollständig | sauber, flackert |
+| `EPD_FastUpdate()` (0xC7) | **sauber, kein Flackern** | Panel bleibt weiß |
+
+Die beiden Zutaten müssen also über Kreuz zusammenpassen. Gewählt ist die ruhige
+Kombination — das Flackern übernimmt der Löschzyklus davor, der Neuaufbau muss es nicht
+wiederholen. Sie entspricht zugleich Elecrows eigenem `5.79_Global_refresh`. Dass
+`EPD_Clear_R26A6H()` damit nicht überflüssig ist, sondern nur an eine andere Stelle gehört
+— vor den **ersten Teilrefresh** —, steht in [`PROGRESS_BAR.md`](PROGRESS_BAR.md).
+
+*`INPUT` genügt.* Die fünf Tasten haben 4,7-kΩ-Pull-ups auf der Platine
+(`material/SCHALTPLAN.md` → *Tasten*), der Pin ist also nicht offen. `INPUT_PULLUP` würde
+nichts verbessern; entprellt wird trotzdem, mit zwei Messungen im Abstand von 15 ms.
 
 Sketches mit WLAN brauchen eine `secrets.h` neben der `.ino`:
 

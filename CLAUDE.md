@@ -88,6 +88,24 @@ Beide müssen gepflegt werden.
   führt der Controller `0x26` selbst nach, deshalb fällt der Fehler nur beim ersten auf und
   sieht nach einem Kontrastproblem des Panels aus. Elecrow macht es in `5.79_key` Zeile
   36–38 genauso; im Treiber steht kein Kommentar dazu, das Datenblatt schweigt ebenfalls.
+- **`EPD_Clear_R26A6H()` gehört vor den ersten Partial-Refresh — und sonst nirgendwohin.**
+  Vor einem vollen oder schnellen Neuaufbau richtet er Schaden an. Am Gerät verglichen
+  (`bedienleiste`, fünf Rezepte hintereinander auf dasselbe Panel), jeweils nach
+  `EPD_Display_Clear()` + `EPD_Update()`:
+
+  | Neuaufbau | ohne `EPD_Clear_R26A6H()` | mit `EPD_Clear_R26A6H()` |
+  |---|---|---|
+  | `EPD_Update()` (`0xF7`) | Text unvollständig | sauber, flackert |
+  | `EPD_FastUpdate()` (`0xC7`) | **sauber, kein Flackern** | Panel bleibt weiß |
+
+  Die Zutaten müssen also über Kreuz zusammenpassen; drei der vier Kombinationen sehen aus
+  wie ein Hardware- oder Kontrastproblem, sind aber ein Register-Missverständnis. Zweimal
+  hintereinander `EPD_Display()` + `EPD_Update()` lässt das Panel ebenfalls weiß — der
+  zweite Aufbau rechnet dann gegen ein `0x26`, das der Controller nach dem ersten Update
+  selbst nachgeführt hat. Ursache ist, dass `0x26`/`0xA6` im Datenblatt „Write RAM (RED)"
+  heißt und der Treiber es zweckentfremdet; welche Bedeutung bei welchem Update-Modus gilt,
+  steht in keiner der beiden Quellen.
+
 - **Im Partial-Betrieb nicht zwischendurch neu initialisieren.** `EPD_FastMode1Init()`
   enthält einen `EPD_HW_RESET()`, und ein zurückgesetzter Controller kennt das vorherige
   Bild nicht mehr. Einmal je Durchlauf initialisieren, dann nur noch
@@ -101,6 +119,11 @@ Beide müssen gepflegt werden.
   sitzen auf der Platine und sind fest verdrahtet. Dass `examples/5.79_key` fünf Tasten
   kennt, ist kein Fehler: der Drehschalter belegt drei davon (zwei Drehrichtungen plus
   Druck). GPIO-Zuordnung und Quelle stehen in `README.md` → *Bedienelemente*.
+- **Die Bedienelemente liegen bei y = 60..70, 110..150 und 200..210** (EXIT, Drehschalter,
+  MENU; Ausrichtung USB oben, Elemente links). Am Gerät abgelesen mit einem Wegwerf-Sketch,
+  der an beiden langen Kanten ein Maßband von 0 bis 271 zeichnet. Wer etwas auf Höhe eines
+  Bedienelements platzieren will, braucht diese Zahlen — im Datenblatt stehen sie nicht,
+  und geschätzt sitzt es daneben.
 - **Textzeilen brauchen `size` Pixel Höhe, nicht weniger.** Zwei untereinander liegende
   16er-Zeilen brauchen also mindestens 32 px plus Abstand. In `ha_verlauf` überlappten
   sich Datumsachse und Fußzeile um 6 px, weil nur 10 px Abstand eingeplant waren.
@@ -202,6 +225,7 @@ Faustregel: MCP zum Stöbern, `curl` zum Verifizieren dessen, was der ESP32 sieh
 | `ha_wechsel` | Temperaturen und Wetter im Minutenwechsel; EXIT blättert, MENU lädt neu |
 | `ha_umschalten` | zwei Sensoren im Wechsel; Testsketch für die drei Refresh-Modi |
 | `progress_bar` | Fortschrittsanzeige, EXIT startet neu — Partial-Refresh richtig genutzt |
+| `bedienleiste` | EXIT, Drehschalter und MENU als Laschen am linken Rand, reagieren auf Druck |
 
 Fehler gehören **auf das Display**, nicht nur ins Log — sonst sieht man bei einem Problem
 nur ein leeres Panel. `ha_temperatur` und `ha_verlauf` zeigen HTTP 401/404 mit einem
@@ -284,19 +308,21 @@ git diff --cached | grep -c 'eyJhbGciOi'          # nur der Platzhalter darf tre
 
 ## Stand
 
-Auf dem Board läuft `sketches/ha_wechsel`: Temperaturen und Wetter im
-Minutenwechsel, Daten alle 10 Minuten, Vollrefresh stündlich. Einzeln flashen
-lassen sich weiterhin `sketches/ha_kacheln` und `sketches/ha_wetter`.
+Auf dem Board liegt zuletzt `sketches/bedienleiste` — die drei Bedienelemente
+als Laschen am linken Rand. Der Betriebssketch ist
+`sketches/ha_wechsel` (Temperaturen und Wetter im Minutenwechsel, Daten alle
+10 Minuten, Vollrefresh stündlich); zurück geht es mit
+`make flash SKETCH=sketches/ha_wechsel`. Einzeln flashen lassen sich weiterhin
+`sketches/ha_kacheln` und `sketches/ha_wetter`.
 
 Alles committet, Arbeitsverzeichnis sauber.
 
-**Offen:** Im Log der ersten Minute nach dem Flashen standen drei
-`EXIT: umgeblaettert`, ohne dass sicher ist, ob jemand gedrückt hat. Falls nicht,
-flattert der Eingang: Die Taster liegen gegen Masse und werden mit
-`pinMode(pin, INPUT)` gelesen — ohne Pull-up ist der Pin offen, solange niemand
-drückt. Abhilfe wäre `INPUT_PULLUP`; an der Logik ändert das nichts, gedrückt
-bleibt LOW. In `progress_bar` fiel es nie auf, weil der die Taste selten
-abfragt; `ha_wechsel` liest 50-mal pro Sekunde.
+**Erledigt:** Der Verdacht, der EXIT-Eingang könnte flattern, weil `INPUT` ohne
+Pull-up einen offenen Pin liest, ist vom Tisch — **alle fünf Tasten haben
+4,7-kΩ-Pull-ups auf der Platine** (`material/SCHALTPLAN.md` → *Tasten*).
+`INPUT` ist damit richtig, `INPUT_PULLUP` würde nichts verbessern. Bleiben die
+drei `EXIT: umgeblaettert` im Log der ersten Minute nach dem Flashen unerklärt;
+falls sie wiederkommen, ist die Ursache eher die Entprellung als der Pegel.
 
 Remote ist `git@github.com:rsascha/claude-arduino-display.git` und **privat — das bleibt
 so.** Grund ist nicht der eigene Inhalt, sondern das mitgeführte Fremdmaterial: die
