@@ -350,6 +350,15 @@ braucht 24 px, und kleiner ist auf dem Panel nicht mehr sicher lesbar: also 32 p
 ist 41 px hoch, seine Lasche 53 — Pfeil, `OK` und Pfeil brauchen zusammen mehr, wenn sie
 Abstand behalten sollen.
 
+*Auf drei Ebenen aufgeteilt, damit die Leiste woanders verwendbar bleibt.* `tasten.cpp`
+kennt nur GPIOs und Entprellung, `laschen.cpp` nur das Zeichnen, die `.ino` verbindet
+beides. Entscheidend sind zwei Regeln in der Zeichenebene: Sie legt **keinen** Bildpuffer
+an und löscht ihn nicht — `Paint_NewImage()` und `Paint_Clear()` ruft die Anwendung —, und
+sie liest keine globalen Variablen. Vorher tat die Zeichenfunktion beides, und damit wäre
+die Leiste in einem Sketch wie `ha_wechsel` unbrauchbar gewesen: Sie hätte als Erstes
+dessen Bild gelöscht. Dass EXIT den Vollrefresh scharf macht, bleibt aus demselben Grund in
+der `.ino` — in `ha_wechsel` blättert EXIT um.
+
 *Drei Funktionen, eine Lasche.* Der Drehschalter ist ein einziges Bedienelement mit drei
 Kontakten (GPIO 4 hoch, 5 drücken, 6 runter). Er bekommt deshalb **eine** Lasche, die in
 drei Zonen geteilt ist — Pfeil hoch, `OK`, Pfeil runter — und beim Bedienen färbt sich nur

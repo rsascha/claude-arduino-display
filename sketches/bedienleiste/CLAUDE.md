@@ -10,6 +10,36 @@ Kein WLAN, keine `secrets.h`. Bauen und flashen:
 make flash SKETCH=sketches/bedienleiste
 ```
 
+## Aufbau
+
+Drei Ebenen, jede mit einer Zuständigkeit:
+
+| Datei | Inhalt | weiß nichts von |
+|---|---|---|
+| `tasten.h/.cpp` | GPIOs, Entprellung, `enum Taste` | Display |
+| `laschen.h/.cpp` | zeichnet die drei Laschen, Geometrie | Tasten, Bildpuffer |
+| `bedienleiste.ino` | Beschriftung, Zähler, Refresh-Politik | — verbindet beides |
+
+**Zwei Regeln machen den Unterschied zwischen Demo und wiederverwendbar**, und beide
+stecken in `laschen.cpp`:
+
+1. Die Zeichenebene legt **keinen** Bildpuffer an und löscht ihn nicht. `Paint_NewImage()`
+   und `Paint_Clear()` ruft die Anwendung. Vorher tat es die Zeichenfunktion selbst — damit
+   wäre die Leiste in einem Sketch wie `../ha_wechsel` unbrauchbar gewesen, weil sie als
+   Erstes dessen Bild gelöscht hätte.
+2. Sie liest **keine** globalen Variablen. Alles Dargestellte kommt als `LaschenZustand`
+   herein. Wer wissen will, was auf dem Panel steht, muss nur diese `struct` ansehen.
+
+Dass ausgerechnet **EXIT** den Vollrefresh scharf macht, ist eine Entscheidung dieser
+Anwendung und steht deshalb in der `.ino`. In `../ha_wechsel` blättert EXIT um — ein
+Widget, das EXIT für sich beansprucht, wäre dort im Weg.
+
+`tasten.cpp` entprellt **beide** Flanken: Gemeldet wird erst, was zweimal im Abstand von
+15 ms gleich gelesen wurde; während eines Prellers bleibt der letzte stabile Wert stehen.
+Sind mehrere Tasten gleichzeitig gedrückt, gewinnt die mit dem kleinsten Index — das Panel
+kann ohnehin nur einen Zustand zeigen. Der Aufruf kostet die 15 ms und gibt der Schleife
+damit ihren Takt; ein zusätzliches `delay()` braucht `loop()` nicht.
+
 ## Bedienung
 
 | Eingabe | Wirkung |
@@ -40,6 +70,8 @@ genutztem `R` — bei einem Testsketch ohne Belang, in einem Dauerbetrieb eine S
 Nachdenken.
 
 ## Was man hier nicht verstellen sollte, ohne es zu wissen
+
+Die Konstanten aus diesem Abschnitt stehen alle in `laschen.cpp`.
 
 **Die y-Positionen sind gemessen, nicht gerechnet.** Die Bedienelemente liegen bei
 60–70, 110–150 und 200–210 — am Gerät abgelesen. Im Code stehen davon die Mitten
