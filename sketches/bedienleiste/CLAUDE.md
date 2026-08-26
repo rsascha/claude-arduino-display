@@ -169,6 +169,6 @@ Kontrast und Lesbarkeit entscheidet trotzdem das Panel, nicht das PNG.
 ## Weiterführend
 
 - `../CLAUDE.md` — Zeichen-API, Refresh-Modi, harte Fakten zum Board
-- `../../PROGRESS_BAR.md` — Partial-Refresh im Detail, inklusive der Stelle, an die
+- `../progress_bar/CLAUDE.md` — Partial-Refresh im Detail, inklusive der Stelle, an die
   `EPD_Clear_R26A6H()` gehört: vor den **ersten** Teilrefresh
 - `../../README.md` → *Sketches* — der Absatz zu diesem Sketch

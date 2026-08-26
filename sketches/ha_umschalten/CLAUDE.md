@@ -37,5 +37,5 @@ Zeitpunkt des Zeichnens noch nicht geschrieben.
 
 ## Weiterführend
 
-- `../../PROGRESS_BAR.md` — Partial-Refresh richtig genutzt
+- `../progress_bar/CLAUDE.md` — Partial-Refresh richtig genutzt
 - `../../CLAUDE.md` → *Harte Fakten* — die Refresh-Modi als Kurzfassung

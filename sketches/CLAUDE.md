@@ -47,8 +47,12 @@ Zusätzlich pflegen, wenn es passt:
 
 - `../CLAUDE.md` → *Harte Fakten*, falls dabei etwas gefunden wurde, das sonst wieder Zeit
   kostet und **nicht** nur diesen einen Sketch betrifft.
-- Eine eigene `.md` im Wurzelverzeichnis nur, wenn ein Thema den Absatz sprengt —
-  Vorbild ist `../PROGRESS_BAR.md` zum Partial-Refresh.
+- Eine eigene `.md` im Wurzelverzeichnis nur, wenn ein Thema **mehrere** Sketches
+  betrifft und in keine der Sketch-Anleitungen gehört. Sprengt ein Thema nur den
+  README-Absatz **eines** Sketches, ist die `CLAUDE.md` dieses Sketches der Ort dafür —
+  Vorbild ist `progress_bar/CLAUDE.md` zum Partial-Refresh, das früher als
+  `PROGRESS_BAR.md` im Wurzelverzeichnis lag und dort nur weiter von seinem Code
+  wegdriftete.
 
 ## Neuen Sketch anlegen
 

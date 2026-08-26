@@ -296,7 +296,7 @@ static void render(Taste aktiv) {
 // Loeschzyklus davor, der Neuaufbau muss es nicht wiederholen.
 //
 // Nicht gefolgt ist daraus, dass EPD_Clear_R26A6H() falsch waere: Vor dem ERSTEN
-// Teilrefresh ist er weiterhin noetig (siehe PROGRESS_BAR.md). Er gehoert nur
+// Teilrefresh ist er weiterhin noetig (siehe ../progress_bar/CLAUDE.md). Er gehoert nur
 // nicht vor ein volles oder schnelles Update.
 
 static void panelInit() {

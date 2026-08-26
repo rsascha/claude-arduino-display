@@ -4,7 +4,7 @@ Arduino-Projekt für das **Elecrow CrowPanel ESP32 5.79" E-Paper HMI Display**
 (272×792, S/W, ESP32-S3-WROOM-1-N8R8, 2× SSD1683 über SPI).
 
 Ausführliche Doku inkl. Quellen: `README.md`.
-Partial-Refresh im Detail: `PROGRESS_BAR.md`.
+Partial-Refresh im Detail: `sketches/progress_bar/CLAUDE.md`.
 
 ## Bauen und Flashen
 
@@ -236,7 +236,6 @@ material/          Handbuch + Datenblätter (PDF + .txt), Fotos (JPEG; *.HEIC is
                    → `material/CLAUDE.md` fasst die Datenblätter mit Seitenangaben zusammen
                    → `.txt` je PDF zum Durchsuchen, `make material-txt` erzeugt sie neu
                    → `*.yaml`: Kommando- und GPIO-Tabellen maschinenlesbar
-PROGRESS_BAR.md    Fortschrittsanzeige und Partial-Refresh — Beispiel `sketches/progress_bar`
 tools/simulator/    Host-Build eines Sketches → PNG (`make sim`), ohne Gerät
                    → übersetzt alle `.cpp` des Sketch-Ordners (`SIM_SRCS`), nicht nur die `.ino`
 Makefile

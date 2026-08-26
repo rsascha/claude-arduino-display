@@ -121,7 +121,6 @@ material/         Handbuch + Datenblätter (PDF und .txt), Fotos des laufenden P
                   Kommando- und GPIO-Tabellen als YAML
 tools/simulator/  Host-Build eines Sketches -> PNG, ohne Gerät
 Makefile          Build-/Flash-Targets, dazu `make sim` und `make material-txt`
-PROGRESS_BAR.md   Fortschrittsanzeige und Partial-Refresh im Detail
 LICENSE           MIT für den eigenen Code, plus Herkunft des Fremdmaterials
 ```
 
@@ -326,7 +325,8 @@ Refresh-Zyklen.
 Gegentest zu `ha_umschalten`: Partial taugt nichts für einen Vollbildwechsel, wohl aber
 hier, wo sich pro Schritt nur ein Segment ändert. Der Sketch zeigt die zwei Bedingungen,
 ohne die das nicht funktioniert — `EPD_Clear_R26A6H()` vor dem ersten Partial-Update und
-kein Hardware-Reset zwischendurch. Ausführlich in **[`PROGRESS_BAR.md`](PROGRESS_BAR.md)**.
+kein Hardware-Reset zwischendurch. Ausführlich in
+**[`sketches/progress_bar/CLAUDE.md`](sketches/progress_bar/CLAUDE.md)**.
 
 **`bedienleiste`** — die drei Bedienelemente an der linken Gehäusekante bekommen ein
 Gegenstück auf dem Panel: oben eine Lasche mit **E** für EXIT, unten eine mit **M** für
@@ -372,7 +372,8 @@ Hintergrund `!color` setzt — bei `WHITE` also Schwarz. Dieselbe Eigenschaft, d
 `ha_kacheln` das Komma ausradiert hat, ist hier genau das Gewünschte.
 
 *Refresh.* Pro Tastendruck zwei Partial-Updates — eines beim Drücken, eines beim
-Loslassen. Die Bedingungen dafür stehen in [`PROGRESS_BAR.md`](PROGRESS_BAR.md):
+Loslassen. Die Bedingungen dafür stehen in
+[`sketches/progress_bar/CLAUDE.md`](sketches/progress_bar/CLAUDE.md):
 `EPD_Clear_R26A6H()` vor dem ersten Partial-Update und kein Hardware-Reset zwischendurch.
 
 *Der Vollrefresh läuft auf Zuruf, und zwar in zwei Schritten.* Erst war er alle 20
@@ -423,7 +424,7 @@ mit der Adressrechnung aus `EPD_Display()` nach `0x26`/`0xA6`.
 Das beantwortet zugleich die Frage, die drei Fehlversuche offengelassen hatten: `0x26`
 benutzt **dieselbe Kodierung wie `0x24`**, 1 = weiß. Der Puffer wird unverändert übernommen
 und ergibt den richtigen Übergang — der Datenblattname „Write RAM (RED)" führt in die Irre.
-Ausführlich in [`PROGRESS_BAR.md`](PROGRESS_BAR.md).
+Ausführlich in [`sketches/progress_bar/CLAUDE.md`](sketches/progress_bar/CLAUDE.md).
 
 *`INPUT` genügt.* Die fünf Tasten haben 4,7-kΩ-Pull-ups auf der Platine
 (`material/SCHALTPLAN.md` → *Tasten*), der Pin ist also nicht offen. `INPUT_PULLUP` würde
