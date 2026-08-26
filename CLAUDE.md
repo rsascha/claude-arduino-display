@@ -136,7 +136,8 @@ Beide müssen gepflegt werden.
   nennt einen Quadratur-Encoder (`TM_2024A`); gemessen ist: Ruhezustand beide HIGH, je
   Betätigung zieht **eine** Phase für 250–640 ms, die Phasen überlappen sich nie. Ein
   Quadratur-Dekoder hätte nichts zu dekodieren. Messmethode und Werte in
-  `sketches/bedienleiste/tasten.h`.
+  `sketches/bedienleiste/tasten.h`. **Lücke:** Gemessen wurden einzelne Rastungen mit
+  Pausen, nicht schnelles Durchdrehen — dabei könnten überlappende Phasen auftreten.
 
 - **Im Partial-Betrieb nicht zwischendurch neu initialisieren.** `EPD_FastMode1Init()`
   enthält einen `EPD_HW_RESET()`, und ein zurückgesetzter Controller kennt das vorherige

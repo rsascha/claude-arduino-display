@@ -27,6 +27,15 @@
 // Entprellung, Flanken mit micros() in ein Array, Ausgabe erst danach. Waehrend
 // der Messung zu drucken haette genau die Flanken verschluckt, um die es ging —
 // eine Serial-Zeile dauert bei 115200 Baud rund 3 ms.
+//
+// LUECKE IN DER MESSUNG: Erfasst wurden EINZELNE Rastungen, jeweils mit Pause
+// dazwischen. Schnelles, ununterbrochenes Durchdrehen wurde nicht provoziert.
+// Sollte sich das Rad wie ein Mausrad durchdrehen lassen, koennten dabei sehr
+// wohl ueberlappende Phasen auftreten — 250..640 ms je Betaetigung sind fuer
+// einen Encoder ungewoehnlich lang und passen eher zu einem gehaltenen Kontakt.
+// Zu klaeren waere das mit demselben Mitschnitt und mehreren zuegigen Rastungen
+// am Stueck: Tauchen A=0 B=0 oder saubere Vierer-Folgen auf, braucht es doch
+// einen Quadratur-Dekoder.
 
 #ifndef TASTEN_H
 #define TASTEN_H

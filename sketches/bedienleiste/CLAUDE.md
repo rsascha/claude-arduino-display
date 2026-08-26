@@ -75,6 +75,13 @@ wie **zwei getrennte Taster**: Ruhezustand `A=1 B=1`, runter zieht nur B, hoch z
 zu dekodieren — die Richtung steckt darin, *welche* Leitung zieht. Messwerte und
 Messmethode stehen im Kopf von `tasten.h`.
 
+**Die Messung hat eine Lücke.** Erfasst wurden *einzelne* Rastungen mit Pausen dazwischen;
+schnelles, ununterbrochenes Durchdrehen wurde nicht provoziert. Lässt sich das Rad wie ein
+Mausrad durchdrehen, könnten dabei überlappende Phasen auftreten — 250–640 ms je Betätigung
+sind für einen Encoder ungewöhnlich lang und passen eher zu einem gehaltenen Kontakt. Zu
+klären mit demselben Mitschnitt und mehreren zügigen Rastungen am Stück: Tauchen `A=0 B=0`
+oder saubere Vierer-Folgen auf, braucht es doch einen Dekoder.
+
 Der Umweg dorthin ist die Lehre: Aus dem Log des normalen Betriebs schien hervorzugehen,
 dass eine Betätigung beide Phasen auslöst. Dieses Log war aber nicht das Signal, sondern
 die Ausgabe unseres Filters — 15 ms Entprellung, bei mehreren LOW-Pins gewinnt der
