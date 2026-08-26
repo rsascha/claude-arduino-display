@@ -15,7 +15,7 @@ der Code liegt.
 | [`ha_wechsel`](ha_wechsel/CLAUDE.md) | **Betriebssketch**: Temperaturen und Wetter im Wechsel | ja |
 | [`ha_umschalten`](ha_umschalten/CLAUDE.md) | Testsketch für die drei Refresh-Modi | ja |
 | [`progress_bar`](progress_bar/CLAUDE.md) | Fortschrittsanzeige — Partial-Refresh richtig genutzt | – |
-| [`bedienleiste`](bedienleiste/CLAUDE.md) | EXIT, Drehschalter und MENU als Laschen am Rand | – |
+| [`bedienleiste`](bedienleiste/CLAUDE.md) | Laschen am Rand plus vier umschaltbare Seiten; RAM-Fenster | – |
 
 Kompilieren und flashen: `make flash SKETCH=sketches/<name>`. **Vorher fragen** — auf dem
 Board läuft ein produktiv genutzter Sketch.

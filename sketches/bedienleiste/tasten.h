@@ -8,10 +8,25 @@
 // 4,7 kOhm auf der Platine (material/SCHALTPLAN.md), INPUT_PULLUP ist also
 // nicht noetig.
 //
-// Der Drehschalter ist ein Quadratur-Encoder (TM_2024A): IO4 und IO6 sind seine
-// beiden Phasen, IO5 der Tastkontakt. Die Phasen werden wie im Elecrow-Beispiel
-// einzeln abgefragt — fuer "welche Richtung wurde gedreht" reicht das, ein
-// echter Encoder-Decoder waere erst fuer Schrittzaehlung noetig.
+// Der Drehschalter ist laut Schaltplan ein Quadratur-Encoder (TM_2024A): IO4 und
+// IO6 sind seine beiden Phasen, IO5 der Tastkontakt. Am Geraet verhaelt er sich
+// aber wie ZWEI GETRENNTE TASTER, und das ist gemessen, nicht vermutet:
+//
+//   Ruhezustand        A=1 B=1 (beide Pull-ups)
+//   runter betaetigt   nur B geht auf 0, A bleibt 1
+//   hoch betaetigt     nur A geht auf 0, B bleibt 1
+//   Dauer              250..640 ms je Betaetigung
+//   Prellen            ein Vorkommnis auf 19 Flanken, 8 us lang
+//
+// Die Phasen ueberlappen sich NIE. Ein Quadratur-Dekoder waere also nicht nur
+// unnoetig, er haette nichts zu dekodieren — es gibt keine Phasenverschiebung,
+// aus der sich eine Richtung ergeben koennte. Die Richtung steckt darin, WELCHE
+// Leitung zieht.
+//
+// Gemessen mit einem Mitschnitt in setup(): digitalRead() auf beide Phasen ohne
+// Entprellung, Flanken mit micros() in ein Array, Ausgabe erst danach. Waehrend
+// der Messung zu drucken haette genau die Flanken verschluckt, um die es ging —
+// eine Serial-Zeile dauert bei 115200 Baud rund 3 ms.
 
 #ifndef TASTEN_H
 #define TASTEN_H

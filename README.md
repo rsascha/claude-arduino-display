@@ -156,7 +156,7 @@ Eigene Sketches in `sketches/`. Kompilieren und flashen mit
 | [`ha_wechsel`](sketches/ha_wechsel) | Temperaturen und Wetter im Wechsel, EXIT und MENU bedienbar | ja |
 | [`ha_umschalten`](sketches/ha_umschalten) | zwei Sensoren im Wechsel; Testsketch für die Refresh-Modi | ja |
 | [`progress_bar`](sketches/progress_bar) | Fortschrittsanzeige, EXIT startet neu — Partial-Refresh | – |
-| [`bedienleiste`](sketches/bedienleiste) | die drei Bedienelemente als Laschen am linken Rand, reagieren auf Druck | – |
+| [`bedienleiste`](sketches/bedienleiste) | Laschen für die drei Bedienelemente, daneben vier umschaltbare Seiten | – |
 
 **`hello_epaper`** — der Startpunkt. Text in mehreren Größen, ein Rahmen, ein paar Formen.
 Zeigt, warum der Puffer 27200 Byte groß ist und was `digitalWrite(7, HIGH)` damit zu tun
@@ -350,14 +350,28 @@ braucht 24 px, und kleiner ist auf dem Panel nicht mehr sicher lesbar: also 32 p
 ist 41 px hoch, seine Lasche 53 — Pfeil, `OK` und Pfeil brauchen zusammen mehr, wenn sie
 Abstand behalten sollen.
 
-*Auf drei Ebenen aufgeteilt, damit die Leiste woanders verwendbar bleibt.* `tasten.cpp`
-kennt nur GPIOs und Entprellung, `laschen.cpp` nur das Zeichnen, die `.ino` verbindet
-beides. Entscheidend sind zwei Regeln in der Zeichenebene: Sie legt **keinen** Bildpuffer
-an und löscht ihn nicht — `Paint_NewImage()` und `Paint_Clear()` ruft die Anwendung —, und
-sie liest keine globalen Variablen. Vorher tat die Zeichenfunktion beides, und damit wäre
-die Leiste in einem Sketch wie `ha_wechsel` unbrauchbar gewesen: Sie hätte als Erstes
-dessen Bild gelöscht. Dass EXIT den Vollrefresh scharf macht, bleibt aus demselben Grund in
-der `.ino` — in `ha_wechsel` blättert EXIT um.
+*Auf fünf Ebenen aufgeteilt, damit die Leiste woanders verwendbar bleibt.* `zeichnen.cpp`
+hält die Primitive, `tasten.cpp` kennt nur GPIOs und Entprellung, `laschen.cpp` nur die
+Laschen, `seiten.cpp` nur den Inhaltsbereich, `panel.cpp` bringt den Puffer aufs Display —
+die `.ino` verbindet alles. **Der Vertrag zwischen den beiden Zeichenebenen ist eine
+Spalte:** Die Laschen fassen nur `x < 46` an, die Seiten nur `x >= 70`, und keine von
+beiden ruft `Paint_Clear()`. Das steht genau einmal in `setup()`. Nur so lässt sich der
+Inhalt wechseln, ohne die Laschen anzufassen — und nur so wäre die Leiste in einem Sketch
+wie `ha_wechsel` brauchbar, der den Rest des Bildes besitzt. Dass EXIT den Vollrefresh
+scharf macht, bleibt aus demselben Grund in der `.ino`: In `ha_wechsel` blättert EXIT um.
+
+*Der Vertrag gilt auch auf sechs Pixel genau.* Die Menü-Markierung begann anfangs sechs
+Pixel links des gelöschten Bereichs. Diese sechs Pixel wurden nie wieder weiß, und jede
+Position, auf der die Markierung stand, ließ dort einen schwarzen Stummel zurück — bis
+daraus ein durchgehender Balken über die ganze Liste wurde. Bei einem `Paint_Clear()` wäre
+das nie aufgefallen: Wer partiell zeichnet, kauft Geschwindigkeit mit Genauigkeit.
+
+*Der Drehschalter ist kein Encoder — das ist gemessen.* Der Schaltplan nennt einen
+Quadratur-Encoder; am Gerät ziehen die beiden Phasen aber nie gleichzeitig, jede Betätigung
+ist ein einzelner Impuls von 250–640 ms auf genau einer Leitung. Ein Dekoder hätte nichts
+zu dekodieren. Herausgefunden mit einem Mitschnitt ohne Entprellung: Das normale Log war
+nicht das Signal, sondern die Ausgabe eines für Taster gebauten Filters — und der zerhackt
+die Flankenfolge, bis kein Muster mehr erkennbar ist.
 
 *Drei Funktionen, eine Lasche.* Der Drehschalter ist ein einziges Bedienelement mit drei
 Kontakten (GPIO 4 hoch, 5 drücken, 6 runter). Er bekommt deshalb **eine** Lasche, die in

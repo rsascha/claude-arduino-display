@@ -1,10 +1,10 @@
 # bedienleiste
 
-Zeichnet die drei Bedienelemente der linken Gehäusekante als Laschen auf das Panel:
-oben **E** (EXIT), unten **M** (MENU), dazwischen der Drehschalter mit Pfeil hoch,
-`OK`, Pfeil runter. Drücken färbt die Lasche schwarz.
+Die drei Bedienelemente der linken Gehäusekante als Laschen auf dem Panel, daneben ein
+Inhaltsbereich mit vier umschaltbaren Seiten. Oben **E** (EXIT), unten **M** (MENU),
+dazwischen der Drehschalter. Wer eine Taste drückt, sieht seine Lasche schwarz werden.
 
-Kein WLAN, keine `secrets.h`. Bauen und flashen:
+Kein WLAN, keine `secrets.h`.
 
 ```bash
 make flash SKETCH=sketches/bedienleiste
@@ -12,163 +12,110 @@ make flash SKETCH=sketches/bedienleiste
 
 ## Aufbau
 
-Drei Ebenen, jede mit einer Zuständigkeit:
+Fünf Ebenen, jede mit einer Zuständigkeit:
 
 | Datei | Inhalt | weiß nichts von |
 |---|---|---|
-| `tasten.h/.cpp` | GPIOs, Entprellung, `enum Taste` | Display |
-| `laschen.h/.cpp` | zeichnet die drei Laschen, Geometrie | Tasten, Bildpuffer |
-| `bedienleiste.ino` | Beschriftung, Zähler, Refresh-Politik | — verbindet beides |
+| `zeichnen.h/.cpp` | `safePixel()`, `fillRect()`, `textWidth()` | allem übrigen |
+| `tasten.h/.cpp` | GPIOs, Entprellung, `enum Taste` | dem Display |
+| `laschen.h/.cpp` | die drei Laschen, **x = 0..45** | Tasten, Seiten, Puffer |
+| `seiten.h/.cpp` | der Inhaltsbereich, **x ≥ 70** | den Laschen |
+| `panel.h/.cpp` | bringt den Puffer aufs Panel | dem Bildinhalt |
+| `bedienleiste.ino` | Navigation, Zähler, Refresh-Politik | — verbindet alles |
 
-**Zwei Regeln machen den Unterschied zwischen Demo und wiederverwendbar**, und beide
-stecken in `laschen.cpp`:
+**Der Vertrag zwischen den beiden Zeichenebenen ist eine Spalte.** Die Laschen fassen nur
+`x < 46` an, die Seiten nur `x >= 70`, und **keine von beiden ruft `Paint_Clear()`**.
+`Paint_NewImage()` und `Paint_Clear()` kommen genau einmal in `setup()` vor; danach löscht
+`seitenBereichLoeschen()` ausschließlich rechts. Nur deshalb lässt sich der Inhalt
+wechseln, ohne die Laschen neu zu zeichnen — und die Leiste wäre in einem fremden Sketch
+brauchbar, der den Rest des Bildes besitzt.
 
-1. Die Zeichenebene legt **keinen** Bildpuffer an und löscht ihn nicht. `Paint_NewImage()`
-   und `Paint_Clear()` ruft die Anwendung. Vorher tat es die Zeichenfunktion selbst — damit
-   wäre die Leiste in einem Sketch wie `../ha_wechsel` unbrauchbar gewesen, weil sie als
-   Erstes dessen Bild gelöscht hätte.
-2. Sie liest **keine** globalen Variablen. Alles Dargestellte kommt als `LaschenZustand`
-   herein. Wer wissen will, was auf dem Panel steht, muss nur diese `struct` ansehen.
+**Der Vertrag gilt auch auf sechs Pixel genau.** Die Menü-Markierung begann anfangs bei
+`SEITEN_X0 - 6`, also links außerhalb des gelöschten Bereichs. Die sechs Pixel wurden nie
+wieder weiß; jede Position, auf der die Markierung einmal stand, ließ dort einen schwarzen
+Stummel zurück, und weil die Zeilen 22 px auseinanderliegen und der Balken 22 px hoch ist,
+wuchsen die Stummel zu einem durchgehenden Balken über die ganze Liste zusammen. Bei einem
+`Paint_Clear()` wäre das nie aufgefallen. **Wer partiell zeichnet, muss jede Grenze exakt
+einhalten.**
 
 Dass ausgerechnet **EXIT** den Vollrefresh scharf macht, ist eine Entscheidung dieser
 Anwendung und steht deshalb in der `.ino`. In `../ha_wechsel` blättert EXIT um — ein
-Widget, das EXIT für sich beansprucht, wäre dort im Weg.
-
-`tasten.cpp` entprellt **beide** Flanken: Gemeldet wird erst, was zweimal im Abstand von
-15 ms gleich gelesen wurde; während eines Prellers bleibt der letzte stabile Wert stehen.
-Sind mehrere Tasten gleichzeitig gedrückt, gewinnt die mit dem kleinsten Index — das Panel
-kann ohnehin nur einen Zustand zeigen. Der Aufruf kostet die 15 ms und gibt der Schleife
-damit ihren Takt; ein zusätzliches `delay()` braucht `loop()` nicht.
+Widget, das die Taste für sich beansprucht, wäre dort im Weg.
 
 ## Bedienung
 
-| Eingabe | Wirkung |
-|---|---|
-| EXIT (GPIO 1) | Lasche wird **schwarz und bleibt es**, der Buchstabe wechselt `E` → `R` |
-| **R** drücken | Vollrefresh: Panel wird gewischt, danach steht wieder das `E` |
-| Rad hoch / drücken / runter (GPIO 4/5/6) | die betroffene Zone der Radlasche wird schwarz |
-| MENU (GPIO 2) | Lasche schwarz |
-| jede Taste außer EXIT | bricht ein scharfes `R` ab |
-| 5 s ohne Tastendruck | `R` verfällt von selbst (`SCHARF_MS`), Log: `R verfallen` |
-
-Der Vollrefresh braucht zwei Drücker, weil er das Panel mehrere Sekunden weiß stehen
-lässt. Wer nur antippen will, ob die Lasche reagiert, soll dabei nicht das halbe
-Display ausknipsen.
-
-**Das scharfe `R` ist ein Zustand, kein Tastendruck** — die Lasche bleibt deshalb
-invertiert, auch wenn die Taste längst losgelassen ist. Nur den Buchstaben zu tauschen war
-zu leise: `E` und `R` sind beide schmal, stehen an derselben Stelle und in derselben Größe,
-und die Lasche wurde beim Loslassen wieder weiß. Der Wechsel ging im Blick auf das ganze
-Panel unter. Eine schwarze Lasche sieht man aus dem Augenwinkel.
-
-**Die Verfallszeit zählt erst, wenn keine Taste mehr gedrückt ist.** Wer EXIT festhält, ist
-noch am Bedienen; ihm den Zustand unter der Hand wegzunehmen wäre das Gegenteil dessen, was
-die Frist bezwecken soll. Der Sinn der Frist: Ein Bedienelement, das dauerhaft in einem
-Sonderzustand steht, den man vergessen hat, löst beim nächsten beiläufigen Druck etwas aus,
-das man nicht wollte. Preis ist ein zusätzlicher Teilrefresh je scharf gemachtem, aber nicht
-genutztem `R` — bei einem Testsketch ohne Belang, in einem Dauerbetrieb eine Stelle zum
-Nachdenken.
-
-## Was man hier nicht verstellen sollte, ohne es zu wissen
-
-Die Konstanten aus diesem Abschnitt stehen alle in `laschen.cpp`.
-
-**Die y-Positionen sind gemessen, nicht gerechnet.** Die Bedienelemente liegen bei
-60–70, 110–150 und 200–210 — am Gerät abgelesen. Im Code stehen davon die Mitten
-(`EXIT_MITTE = 65`, `MENU_MITTE = 205`) und für das Rad die gezeichneten Kanten
-(`RAD_Y0/RAD_Y1 = 104/156`, siehe Tabelle unten). Wer sie ändert,
-verschiebt die Laschen gegen die echten Taster. Nachmessen geht mit einem Sketch, der
-an beiden langen Kanten ein Maßband von 0 bis 271 zeichnet (Striche alle 10 px,
-Beschriftung alle 50 px); der Wegwerf-Sketch dafür ist nach dem Messen gelöscht worden.
-
-**Keine Lasche hat die Höhe ihres Elements — sie sitzt auf dessen Mitte.** Die Mitte ist
-die Information, auf die es beim Zuordnen ankommt; die Höhe richtet sich danach, was
-hineinpassen muss.
-
-| Lasche | Element | gezeichnet | warum |
-|---|---|---|---|
-| `E`, `M` | 11 px | 32 px (`KLEIN_H`) | ein Buchstabe in Größe 24 braucht 24 px |
-| Rad | 41 px (110–150) | 53 px (`RAD_Y0/Y1` = 104/156) | Pfeil + `OK` + Pfeil plus Abstände |
-
-**Der Drehschalter bekommt eine Lasche, nicht drei.** Er ist *ein* Bedienelement mit
-drei Kontakten (Quadratur-Encoder plus Tastkontakt). Drei getrennte Laschen würden drei
-Bedienelemente vortäuschen. Deshalb drei Zonen in einer Form, und invertiert wird nur
-die betroffene Zone.
-
-**Die 4 px Lücken zwischen Pfeil, `OK` und Pfeil sind keine Kosmetik.** Vorher lagen die
-drei Inhalte ohne Abstand aneinander — zwischen `OK` und dem unteren Pfeil sogar mit 0 px.
-Passiv fiel das nicht auf, weil alles dieselbe Farbe hat. **Invertiert schon:** Die
-Zonengrenze lag genau auf der Inhaltskante, und der weiße Pfeil stieß mit seiner
-breitesten Zeile — der Basis — an die weiße Fläche daneben. Er las sich damit als **Kerbe**
-im schwarzen Balken statt als Pfeil; in der `OK`-Zone wirkten umgekehrt beide schwarzen
-Pfeile abgeschnitten.
-
-Deshalb gilt jetzt: 4 px zwischen den Inhalten, und jede Zone reicht 2 px über ihren
-Inhalt hinaus, damit der invertierte Inhalt ringsum Rand behält.
-
-```
-Pfeil oben  110..117      Zone hoch    106..119
-   Lücke    118..121
-OK          122..137      Zone OK      120..139
-   Lücke    138..141
-Pfeil unten 142..149      Zone runter  140..154
-```
-
-Die Inhaltspositionen hängen **nicht** an `RAD_Y0`/`RAD_Y1`. Wer die Lasche höher oder
-flacher macht, verschiebt damit nur den Rand. Vorher war der obere Pfeil als `RAD_Y0 + 4`
-und der untere als `RAD_Y1 - 11` gerechnet — jede Änderung der Höhe hätte den Inhalt
-mitgezogen und den unteren Pfeil aus der Mitte geschoben.
-
-**Solche Fehler sieht man nur im Vergleich.** Alle vier Zustände nebeneinander zu rendern
-hat sie sichtbar gemacht; im Vollbild und einzeln fiel keiner auf. Wie das geht, steht
-unten unter *Layout prüfen ohne Gerät*.
-
-**`pinMode(pin, INPUT)` ist richtig.** Alle fünf Tasten haben 4,7-kΩ-Pull-ups auf der
-Platine (`material/SCHALTPLAN.md` → *Tasten*). `INPUT_PULLUP` bringt nichts.
-
-## Refresh — die teuerste Erkenntnis dieses Sketches
-
-Regelfall ist `EPD_PartUpdate()`: Pro Tastendruck ändert sich eine Lasche, genau der
-Fall, für den Partial gedacht ist. Zwischen den Teilrefreshs darf **nicht** neu
-initialisiert werden — `EPD_FastMode1Init()` enthält einen Hardware-Reset, und ein
-zurückgesetzter Controller kennt das vorherige Bild nicht mehr.
-
-Der Vollrefresh (`vollrefresh()`) ist Löschzyklus + Neuaufbau. Der Neuaufbau ist am
-Gerät ermittelt, nicht hergeleitet; jeweils nach `EPD_Display_Clear()` + `EPD_Update()`:
-
-| Neuaufbau | ohne `EPD_Clear_R26A6H()` | mit `EPD_Clear_R26A6H()` |
+| Eingabe | im Menü | auf einer Seite |
 |---|---|---|
-| `EPD_Update()` (`0xF7`) | Text unvollständig | sauber, flackert |
-| `EPD_FastUpdate()` (`0xC7`) | **sauber, kein Flackern** ← gewählt | Panel bleibt weiß |
+| Rad hoch / runter | Auswahl bewegen | direkt blättern |
+| Rad drücken (`OK`) | markierte Seite öffnen | zurück ins Menü |
+| MENU | — | zurück ins Menü |
+| EXIT | `E` → `R`, zweiter Druck wischt | dito |
+| 5 s ohne Tastendruck | `R` verfällt (`SCHARF_MS`), Log: `R verfallen` | |
 
-Zweimal hintereinander `EPD_Display()` + `EPD_Update()` lässt das Panel ebenfalls weiß.
+Die vier Seiten: **Menue** (Liste), **Tasten** (Diagnose mit Zählern), **Refresh** (was
+beim Bedienen mit dem Panel passiert), **Muster** (große Flächen — der Sichttest, ob die
+Laschen beim Seitenwechsel unberührt bleiben).
 
-Drei dieser Fehlbilder sehen aus wie ein Hardware- oder Kontrastproblem und sind ein
-Register-Missverständnis: `0x26`/`0xA6` heißt im Datenblatt „Write RAM (RED)", der
-Elecrow-Treiber benutzt es als *vorheriges Bild* für den Teilrefresh. Welche Bedeutung
-bei welchem Update-Modus gilt, steht in keiner der beiden Quellen.
+**Der Vollrefresh setzt auch den Zustand zurück:** Menü, Auswahl oben, Zähler auf null.
+Danach steht alles wie nach dem Flashen. Ein sauberes Panel mit halb gelaufenen Zählern
+wäre ein Zwischending, das beim Messen nur verwirrt. Der Anfangszustand steht in **einer**
+Funktion, die `setup()` und der Vollrefresh gemeinsam aufrufen — zweimal hingeschrieben
+liefe er beim nächsten neuen Feld auseinander.
 
-**Gewischt wird das Ruhebild, nicht die gedrückte Lasche.** Sonst friert der
-Vollrefresh den schwarzen Block ein, und das Loslassen müsste ihn per Teilrefresh
-wieder wegnehmen — ein großer Schwarz-nach-Weiß-Sprung, das Schlechteste, was man
-Partial geben kann.
+**Das scharfe `R` ist ein Zustand, kein Tastendruck** — die Lasche bleibt invertiert, auch
+wenn die Taste längst losgelassen ist. Nur den Buchstaben zu tauschen war zu leise: `E` und
+`R` sind beide schmal, stehen an derselben Stelle und in derselben Größe. Die Verfallszeit
+zählt erst, wenn keine Taste mehr gedrückt ist; wer EXIT festhält, ist noch am Bedienen.
 
-**Nach dem Wischen muss `0x26`/`0xA6` nachgetragen werden — `merkeAltesBild()`.** Ohne das
-kam der **erste** Tastendruck nach einem Vollrefresh nur grau heraus, egal welche Taste; ab
-dem zweiten stimmte es. Auf dem Panel steht dann das Ruhebild, in `0x26` aber noch, was
-`EPD_Display_Clear()` dort hinterlassen hat — der erste Teilrefresh rechnet gegen einen
-Ausgangszustand, den es nicht gibt, und treibt die Pixel zu schwach.
+## Der Drehschalter ist kein Encoder — gemessen, nicht vermutet
 
-`EPD_Clear_R26A6H()` hilft hier **nicht**: Es setzt „vorher alles weiß", was nur direkt
-nach dem Löschzyklus stimmt, und vor dem `EPD_FastUpdate()` des Neuaufbaus lässt es das
-Panel ganz weiß (Kreuztabelle oben). Gebraucht wird nicht „weiß", sondern „genau das, was
-gerade zu sehen ist" — dafür gibt es im Treiber keine Funktion, nur die Bausteine.
-`merkeAltesBild()` schreibt deshalb den Bildpuffer mit der Adressrechnung aus
-`EPD_Display()` nach `0x26`/`0xA6`. Die Funktion steht in der `.ino`, damit die
-Vendor-Dateien unverändert bleiben.
+Der Schaltplan sagt Quadratur-Encoder (`TM_2024A`, zwei Phasen). Am Gerät verhält er sich
+wie **zwei getrennte Taster**: Ruhezustand `A=1 B=1`, runter zieht nur B, hoch zieht nur A,
+250–640 ms je Betätigung, die Phasen überlappen sich **nie**. Ein Dekoder hätte hier nichts
+zu dekodieren — die Richtung steckt darin, *welche* Leitung zieht. Messwerte und
+Messmethode stehen im Kopf von `tasten.h`.
 
-Damit ist nebenbei belegt, dass `0x26` **dieselbe Kodierung wie `0x24`** benutzt (1 = weiß):
-Der Puffer wird unverändert übernommen und ergibt den richtigen Übergang.
+Der Umweg dorthin ist die Lehre: Aus dem Log des normalen Betriebs schien hervorzugehen,
+dass eine Betätigung beide Phasen auslöst. Dieses Log war aber nicht das Signal, sondern
+die Ausgabe unseres Filters — 15 ms Entprellung, bei mehreren LOW-Pins gewinnt der
+kleinste Index. Ein für **Taster** gebauter Filter, auf einen vermeintlichen Encoder
+losgelassen. Erst der ungefilterte Mitschnitt mit `micros()` hat die Frage beantwortet.
+
+## Refresh — was gilt und was offen ist
+
+Zur Laufzeit gibt es **einen** Modus: Teilrefresh mit RAM-Fenster (`panelFenster()`).
+`EPD_FastUpdate()` kommt nur im Vollrefresh vor, direkt hinter dem Hardware-Reset.
+
+**Fast-Update mitten im Betrieb ist unbrauchbar.** `0xC7` lädt keine LUT nach und benutzt
+die des Teilrefreshs. Am Gerät trieb das Panel dadurch schrittweise ins Schwarze: Beim
+ersten Inhaltswechsel kam der neue schwarze Block nur grau, beim zweiten war fast alles
+schwarz. GxEPD2 führt für diesen Fall ein Flag `_using_partial_mode` und initialisiert bei
+jedem Moduswechsel neu — hier wird der Wechsel stattdessen ganz vermieden.
+
+**Offen: Warum trägt nur das volle Fenster?** Am Gerät belegt:
+
+| Fenster beim Teilrefresh | Ergebnis |
+|---|---|
+| ganzes Bild (x 0–791) | funktioniert |
+| Laschenstreifen (x 0–45) | macht den vorherigen Inhaltswechsel rückgängig |
+
+Zwei Erklärungsversuche sind widerlegt: ein veraltetes `0x26` (Nachführen half nicht) und
+„ein zweiter Teilrefresh stört" (mit vollem Fenster stört er nicht). Solange die Erklärung
+fehlt, ruft die `.ino` nur das volle Fenster auf — die 17-fache Ersparnis des kleinen
+Fensters liegt also noch auf der Straße. Nächster Ansatz wäre zu klären, ob `0x44`/`0x45`
+im **kaskadierten** Betrieb den Update-Bereich überhaupt begrenzen oder nur den
+Schreibzugriff steuern.
+
+Die Registerfolge selbst ist erarbeitet und dokumentiert (`panel.cpp`): `0x11 = 0x05`,
+`0x44`/`0x45`, `0x4E`/`0x4F` für den Master; `0x91 = 0x04`, `0xC4`/`0xC5`, `0xCE`/`0xCF`
+für den Slave, dessen X-Adressen **rückwärts** zählen (`slaveX = 99 - Pufferspalte`).
+Pufferzeile `r` landet auf Panelzeile `271 - r`. Nichts davon steht im Datenblatt; alles
+ist aus `EPD_Init.cpp` abgelesen und am Gerät bestätigt.
+
+**Der zweite Hebel liegt woanders:** `spi.cpp` bit-bangt das SPI (drei `digitalWrite()` je
+Bit, CS je Byte) — ein Vollbild sind rund 650.000 `digitalWrite`-Aufrufe, bevor das Panel
+überhaupt anfängt. Der SSD1683 kann laut Datenblatt 20 MHz Hardware-SPI. Das wirkt auf
+*jedes* Update, unabhängig von der Fenstergröße.
 
 ## Layout prüfen ohne Gerät
 
@@ -176,31 +123,19 @@ Der Puffer wird unverändert übernommen und ergibt den richtigen Übergang.
 make sim SKETCH=sketches/bedienleiste
 ```
 
-Übersetzt den Sketch nativ und schreibt `tools/simulator/out.png` — mit dem echten
-`EPD.cpp` und den echten Fonts, ersetzt sind nur Arduino, WLAN und HTTP. Der Simulator
-führt nur `setup()` aus und zeigt damit das Ruhebild.
-
-Für die gedrückten Zustände `render(T_KEINE)` in `setup()` vorübergehend auf die
-gewünschte Taste ändern und die Ausschnitte nebeneinanderlegen — so sind die Kerben in den
-invertierten Pfeilen aufgefallen:
+Der Simulator führt nur `setup()` aus, zeigt also das Menü im Ruhezustand. Für andere
+Seiten `static Seite seite = S_MENUE;` vorübergehend ändern, für gedrückte Zustände den
+Aufruf von `laschenZeichnen(...)`. Alle Zustände nebeneinanderlegen — so sind die Kerben in
+den invertierten Pfeilen und die 9-px-Überlappung auf der Refresh-Seite aufgefallen, die
+einzeln jeweils plausibel aussahen:
 
 ```bash
-cp sketches/bedienleiste/bedienleiste.ino /tmp/bl.bak
-for t in T_KEINE T_HOCH T_OK T_RUNTER; do
-  cp /tmp/bl.bak sketches/bedienleiste/bedienleiste.ino
-  sed -i '' "s/  render(T_KEINE);/  render($t);/" sketches/bedienleiste/bedienleiste.ino
-  make sim SKETCH=sketches/bedienleiste SIM_OUT=/tmp/z_$t.png
-  magick /tmp/z_$t.png -crop 60x70+0+94 +repage -scale 600% /tmp/k_$t.png
-done
-cp /tmp/bl.bak sketches/bedienleiste/bedienleiste.ino     # nicht vergessen
-magick /tmp/k_T_*.png +append /tmp/zustaende.png
+magick /tmp/z_*.png -crop 60x70+0+94 +repage -scale 600% +append /tmp/vergleich.png
 ```
 
-Kontrast und Lesbarkeit entscheidet trotzdem das Panel, nicht das PNG.
+Kontrast und Reaktionszeit entscheidet trotzdem das Panel, nicht das PNG.
 
 ## Weiterführend
 
-- `../CLAUDE.md` — Zeichen-API, Refresh-Modi, harte Fakten zum Board
-- `../progress_bar/CLAUDE.md` — Partial-Refresh im Detail, inklusive der Stelle, an die
-  `EPD_Clear_R26A6H()` gehört: vor den **ersten** Teilrefresh
-- `../../README.md` → *Sketches* — der Absatz zu diesem Sketch
+- `../progress_bar/CLAUDE.md` — Partial-Refresh im Detail, `EPD_Clear_R26A6H()`
+- `../../CLAUDE.md` → *Harte Fakten* — Zeichen-API, Refresh-Modi, Board

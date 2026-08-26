@@ -1,4 +1,5 @@
 #include "laschen.h"
+#include "zeichnen.h"
 #include "EPD.h"
 
 // ---------------------------------------------------------------------------
@@ -19,9 +20,6 @@
 // Die Werte gelten fuer die Ausrichtung USB oben / Bedienelemente links, also
 // Paint_NewImage(..., 0, ...). Bei jeder anderen Rotation sitzen die Laschen
 // nicht mehr neben ihren Tastern.
-static const int SCREEN_W = 792;   // sichtbar; der Puffer (EPD_W) ist 800 breit
-static const int SCREEN_H = 272;
-
 static const int EXIT_MITTE = 65;
 static const int MENU_MITTE = 205;
 static const int KLEIN_H    = 32;
@@ -65,23 +63,6 @@ static const int UMRISS = 2;        // Strichstaerke der Laschenkontur
 // ---------------------------------------------------------------------------
 // Zeichenhilfen
 // ---------------------------------------------------------------------------
-
-// Paint_SetPixel() prueft seine Koordinaten NICHT und rechnet mit uint16_t: ein
-// negativer Wert wird zu einer riesigen Zahl und schreibt irgendwohin in den
-// Speicher. Deshalb signed rechnen und vorher abfangen.
-static void safePixel(int x, int y, uint16_t color) {
-  if (x < 0 || x >= SCREEN_W || y < 0 || y >= SCREEN_H) return;
-  Paint_SetPixel((uint16_t)x, (uint16_t)y, color);
-}
-
-static void fillRect(int x0, int y0, int x1, int y1, uint16_t color) {
-  for (int y = y0; y <= y1; y++)
-    for (int x = x0; x <= x1; x++)
-      safePixel(x, y, color);
-}
-
-// EPD_ShowString() bricht nicht um; Zeichenbreite ist size/2.
-static int textWidth(const char* s, int size) { return (int)strlen(s) * (size / 2); }
 
 // Wie weit die Lasche in dieser Zeile hinter der vollen Breite zurueckbleibt.
 // Ergibt die abgerundete Innenkante — eine Lasche mit scharfen Ecken sieht aus

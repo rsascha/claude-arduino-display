@@ -115,6 +115,29 @@ Beide müssen gepflegt werden.
   `0x24` (1 = weiß)** — der Puffer wird unverändert übernommen; am Gerät bestätigt. Der
   Datenblattname „Write RAM (RED)" führt hier in die Irre.
 
+- **Fast-Update mitten im Betrieb treibt das Panel ins Schwarze.** `EPD_FastUpdate()`
+  (`0xC7`) lädt keine LUT nach und benutzt die, die gerade geladen ist — nach Teilrefreshs
+  also deren Waveform. Am Gerät (`bedienleiste`) kam der erste Inhaltswechsel danach nur
+  grau heraus, beim zweiten war fast alles schwarz. `EPD_FastUpdate()` gehört deshalb
+  ausschließlich direkt hinter einen Hardware-Reset. GxEPD2 führt für denselben Fall ein
+  Flag `_using_partial_mode` und initialisiert bei jedem Moduswechsel neu; die Alternative
+  ist, den Moduswechsel ganz zu vermeiden und zur Laufzeit nur Teilrefresh zu fahren.
+- **RAM-Fenster: Die Registerfolge steht, die Wirkung ist ungeklärt.** Ein Teilrefresh muss
+  nicht das ganze RAM schreiben — `0x11`/`0x44`/`0x45`/`0x4E`/`0x4F` engen den Bereich ein
+  (Master), `0x91`/`0xC4`/`0xC5`/`0xCE`/`0xCF` den des Slave, dessen X-Adressen
+  **rückwärts** zählen: `slaveX = 99 - Pufferspalte`. Pufferzeile `r` landet auf Panelzeile
+  `271 - r`. Vorlage ist GxEPD2 (`_setPartialRamArea`), die Konventionen stammen aus
+  `EPD_Init.cpp`. Ein Fenster über den Laschenstreifen sind 1.632 statt 27.200 Byte, und
+  der Tastendruck wird dadurch spürbar schneller. **Aber:** Ein kleines Fenster macht am
+  Gerät den vorherigen Inhaltswechsel wieder rückgängig, ein Fenster über das ganze Bild
+  nicht. Beides belegt, keine Erklärung. Details und die widerlegten Hypothesen in
+  `sketches/bedienleiste/CLAUDE.md`.
+- **Der Drehschalter verhält sich wie zwei Taster, nicht wie ein Encoder.** Der Schaltplan
+  nennt einen Quadratur-Encoder (`TM_2024A`); gemessen ist: Ruhezustand beide HIGH, je
+  Betätigung zieht **eine** Phase für 250–640 ms, die Phasen überlappen sich nie. Ein
+  Quadratur-Dekoder hätte nichts zu dekodieren. Messmethode und Werte in
+  `sketches/bedienleiste/tasten.h`.
+
 - **Im Partial-Betrieb nicht zwischendurch neu initialisieren.** `EPD_FastMode1Init()`
   enthält einen `EPD_HW_RESET()`, und ein zurückgesetzter Controller kennt das vorherige
   Bild nicht mehr. Einmal je Durchlauf initialisieren, dann nur noch
