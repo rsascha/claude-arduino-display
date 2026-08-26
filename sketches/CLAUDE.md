@@ -1,5 +1,25 @@
 # Eigene Sketches
 
+Index. Die Einzelheiten stehen je Sketch in seiner eigenen `CLAUDE.md` — dort, wo auch
+der Code liegt.
+
+| Sketch | Inhalt | WLAN |
+|---|---|---|
+| [`hello_epaper`](hello_epaper/CLAUDE.md) | Text, Formen, Grundlayout — der Einstieg | – |
+| [`smiley`](smiley/CLAUDE.md) | Bogen-Funktion, `safePixel()`, Kreise mit Strichstärke | – |
+| [`ha_temperatur`](ha_temperatur/CLAUDE.md) | ein Sensorwert groß auf dem Display | ja |
+| [`ha_verlauf`](ha_verlauf/CLAUDE.md) | Temperaturkurve über 10 Tage mit Gitter und Achsen | ja |
+| [`ha_raeume`](ha_raeume/CLAUDE.md) | sechs Räume plus Außen in einem Diagramm | ja |
+| [`ha_kacheln`](ha_kacheln/CLAUDE.md) | Räume als Kacheln, nach Temperatur sortiert, mit Trend | ja |
+| [`ha_wetter`](ha_wetter/CLAUDE.md) | Wind, Luftdruck, Wetterlage in vier Spalten | ja |
+| [`ha_wechsel`](ha_wechsel/CLAUDE.md) | **Betriebssketch**: Temperaturen und Wetter im Wechsel | ja |
+| [`ha_umschalten`](ha_umschalten/CLAUDE.md) | Testsketch für die drei Refresh-Modi | ja |
+| [`progress_bar`](progress_bar/CLAUDE.md) | Fortschrittsanzeige — Partial-Refresh richtig genutzt | – |
+| [`bedienleiste`](bedienleiste/CLAUDE.md) | EXIT, Drehschalter und MENU als Laschen am Rand | – |
+
+Kompilieren und flashen: `make flash SKETCH=sketches/<name>`. **Vorher fragen** — auf dem
+Board läuft ein produktiv genutzter Sketch.
+
 ## Doku-Pflicht
 
 **Jeder neue Sketch und jede Änderung an einem bestehenden gehört nach `../README.md`,
@@ -17,10 +37,16 @@ Zu aktualisieren sind **zwei** Stellen:
 Bei Änderungen prüfen, ob der bestehende Absatz noch stimmt — eine geänderte Taktrate oder
 ein anderer Refresh-Modus steht dort oft mit drin.
 
+Dazu die **eigene `CLAUDE.md` im Sketch-Ordner** und die Zeile in der Tabelle oben. Der
+Unterschied zur README: Dort steht, *was* der Sketch tut und warum — für jemanden, der das
+Repo liest. Hier steht, was beim **Ändern des Codes** wichtig ist: Bedienung, Konstanten,
+die man ohne Vorwissen falsch verstellt, und die Fehler, die schon einmal Zeit gekostet
+haben. Beides ist Pflicht, keines ersetzt das andere.
+
 Zusätzlich pflegen, wenn es passt:
 
-- `../CLAUDE.md` → Sketch-Tabelle unter *Sketches*, und *Harte Fakten*, falls dabei etwas
-  gefunden wurde, das sonst wieder Zeit kostet.
+- `../CLAUDE.md` → *Harte Fakten*, falls dabei etwas gefunden wurde, das sonst wieder Zeit
+  kostet und **nicht** nur diesen einen Sketch betrifft.
 - Eine eigene `.md` im Wurzelverzeichnis nur, wenn ein Thema den Absatz sprengt —
   Vorbild ist `../PROGRESS_BAR.md` zum Partial-Refresh.
 
@@ -42,13 +68,10 @@ cp sketches/ha_verlauf/{EPD.cpp,EPD.h,EPD_Init.cpp,EPD_Init.h,EPDfont.h,spi.cpp,
 Alle Dateien im Ordner werden automatisch mitkompiliert. `src/` als Ordnername vermeiden:
 Arduino behandelt ein `src/` *innerhalb* eines Sketches als Sonderfall.
 
-**Eine eigene `CLAUDE.md` im Sketch-Ordner ist erlaubt und stört den Build nicht.** Arduino
-übersetzt nur bekannte Endungen (`.ino`, `.cpp`, `.c`, `.h`, `.S`), alles andere wird
-ignoriert — nachgeprüft: mit und ohne die Datei ist das Kompilat byte-gleich groß, und
-`make sim` sieht sie ebenfalls nicht (es übersetzt `$(wildcard $(SKETCH)/*.cpp)`). Sinnvoll
-ist sie, wenn ein Sketch eine Bedienung hat oder Konstanten, die man ohne Vorwissen falsch
-verstellt. Vorbild: `bedienleiste/CLAUDE.md`. Sie ersetzt **nicht** den Absatz in
-`../README.md` — der bleibt Pflicht.
+**Eine eigene `CLAUDE.md` im Sketch-Ordner stört den Build nicht.** Arduino übersetzt nur
+bekannte Endungen (`.ino`, `.cpp`, `.c`, `.h`, `.S`), alles andere wird ignoriert —
+nachgeprüft: mit und ohne die Datei ist das Kompilat byte-gleich groß, und `make sim`
+sieht sie ebenfalls nicht (es übersetzt `$(wildcard $(SKETCH)/*.cpp)`).
 
 Die Vendor-Dateien möglichst **unverändert** lassen — Einstellungen gehören in die `.ino`,
 sonst gehen sie beim nächsten Kopieren verloren. Das gilt auch für `Rotation`: `EPD.h`

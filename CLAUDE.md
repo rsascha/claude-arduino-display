@@ -144,18 +144,11 @@ sonst gehen sie beim nächsten Kopieren verloren.
 
 ## Sketch-Ordner anlegen
 
-Ausführlich samt Doku-Pflicht: `sketches/CLAUDE.md`.
-
-Ordnername und `.ino` müssen **identisch** heißen:
-
-```
-sketches/mein_sketch/mein_sketch.ino
-```
-
-Alle weiteren Dateien im Ordner werden automatisch mitkompiliert. `src/` als Ordnername
-vermeiden: Arduino behandelt ein `src/` *innerhalb* eines Sketches als Sonderfall
-(einziger rekursiv kompilierter Unterordner). Im Sketchbook-Wurzelverzeichnis sind
-zusätzlich `libraries/` und `hardware/` reserviert.
+Steht in `sketches/CLAUDE.md`: Namensregel, Vendor-Dateien kopieren, `secrets.h`,
+Fallstricke. Kurzfassung: Ordnername und `.ino` müssen **identisch** heißen, alle Dateien
+im Ordner werden mitkompiliert, und `src/` als Ordnername ist ein Sonderfall (einziger
+rekursiv kompilierter Unterordner). Im Sketchbook-Wurzelverzeichnis sind zusätzlich
+`libraries/` und `hardware/` reserviert.
 
 ## Arduino-Eigenheiten
 
@@ -213,19 +206,9 @@ Faustregel: MCP zum Stöbern, `curl` zum Verifizieren dessen, was der ESP32 sieh
 
 ## Sketches
 
-| Sketch | Inhalt |
-|---|---|
-| `hello_epaper` | Text, Formen, Grundlayout — der Einstieg |
-| `smiley` | eigene Bogen-Funktion, `safePixel()`, Kreise mit Strichstärke |
-| `ha_temperatur` | ein HA-Sensorwert groß auf dem Display |
-| `ha_verlauf` | Temperaturkurve über 10 Tage mit Gitter und Achsen |
-| `ha_raeume` | sechs Räume plus Außen in einem Diagramm, Beschriftung am Kurvenende |
-| `ha_kacheln` | alle Räume plus Außen als Kacheln, nach Temperatur sortiert, mit Trend |
-| `ha_wetter` | Wind (Kompassrose), Luftdruck mit Tendenz, Wetter-Icon — vier Spalten |
-| `ha_wechsel` | Temperaturen und Wetter im Minutenwechsel; EXIT blättert, MENU lädt neu |
-| `ha_umschalten` | zwei Sensoren im Wechsel; Testsketch für die drei Refresh-Modi |
-| `progress_bar` | Fortschrittsanzeige, EXIT startet neu — Partial-Refresh richtig genutzt |
-| `bedienleiste` | EXIT, Drehschalter und MENU als Laschen am linken Rand, reagieren auf Druck |
+**Index samt Doku-Pflicht: `sketches/CLAUDE.md`.** Jeder Sketch hat dort eine Zeile und
+daneben eine eigene `CLAUDE.md` in seinem Ordner — Bedienung, Konstanten und die Fehler,
+die er schon gekostet hat. Der Betriebssketch ist `sketches/ha_wechsel`.
 
 Fehler gehören **auf das Display**, nicht nur ins Log — sonst sieht man bei einem Problem
 nur ein leeres Panel. `ha_temperatur` und `ha_verlauf` zeigen HTTP 401/404 mit einem
@@ -235,7 +218,8 @@ Hinweis auf die wahrscheinliche Ursache an.
 
 ```
 sketches/          Eigene Sketches (secrets.h darin ist gitignored)
-                   → `sketches/CLAUDE.md`: neue Sketches gehören nach `README.md`
+                   → `sketches/CLAUDE.md`: Index aller Sketches und die Doku-Pflicht
+                   → je Sketch eine eigene `CLAUDE.md` neben der `.ino`
 libraries/         Elecrow-Library-Bundle (zugleich Sketchbook-libraries/)
 examples/          Offizielle Elecrow-Beispiele + Demos — Vorlagen zum Kopieren
 factory_firmware/  Werksfirmware als Backup
