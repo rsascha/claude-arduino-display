@@ -42,6 +42,14 @@ cp sketches/ha_verlauf/{EPD.cpp,EPD.h,EPD_Init.cpp,EPD_Init.h,EPDfont.h,spi.cpp,
 Alle Dateien im Ordner werden automatisch mitkompiliert. `src/` als Ordnername vermeiden:
 Arduino behandelt ein `src/` *innerhalb* eines Sketches als Sonderfall.
 
+**Eine eigene `CLAUDE.md` im Sketch-Ordner ist erlaubt und stört den Build nicht.** Arduino
+übersetzt nur bekannte Endungen (`.ino`, `.cpp`, `.c`, `.h`, `.S`), alles andere wird
+ignoriert — nachgeprüft: mit und ohne die Datei ist das Kompilat byte-gleich groß, und
+`make sim` sieht sie ebenfalls nicht (es übersetzt `$(wildcard $(SKETCH)/*.cpp)`). Sinnvoll
+ist sie, wenn ein Sketch eine Bedienung hat oder Konstanten, die man ohne Vorwissen falsch
+verstellt. Vorbild: `bedienleiste/CLAUDE.md`. Sie ersetzt **nicht** den Absatz in
+`../README.md` — der bleibt Pflicht.
+
 Die Vendor-Dateien möglichst **unverändert** lassen — Einstellungen gehören in die `.ino`,
 sonst gehen sie beim nächsten Kopieren verloren. Das gilt auch für `Rotation`: `EPD.h`
 liefert 180, die Sketches übergeben stattdessen eine eigene `0` an `Paint_NewImage()`.
